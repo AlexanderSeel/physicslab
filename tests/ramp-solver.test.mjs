@@ -54,3 +54,18 @@ test("fixed-step runs are deterministic for matching inputs", () => {
 
   assert.deepEqual(run(), run());
 });
+
+test("ramp meets the table without an upward hop", () => {
+  const simulation = new RampSolver();
+  const ball = simulation.addBody("ball");
+  let previousY = ball.y;
+  let crossedRampLip = false;
+  for (let i = 0; i < 600 && !crossedRampLip; i += 1) {
+    simulation.step();
+    assert.ok(ball.y <= previousY + 1e-9, "the body must not jump upward at the ramp-to-table transition");
+    previousY = ball.y;
+    crossedRampLip = ball.x >= 1.6;
+  }
+  assert.equal(crossedRampLip, true, "the ball should reach the level table");
+  assert.ok(Math.abs(ball.y - 0.36) < 0.03, "the body should meet the table at its surface height");
+});
