@@ -20,7 +20,7 @@ Requires Node.js 22 or newer.
 npm install
 npm run dev
 npm run validate
-npm test
+npm test # ramp solver and lesson persistence regression tests
 npm run typecheck
 npm run build
 ```
