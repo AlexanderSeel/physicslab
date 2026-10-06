@@ -69,11 +69,7 @@ Unknown asset IDs stop the run with an error. Subset runs merge their entries in
 
 ## Lab environment
 
-The app includes a four-wall laboratory shell, a framed panoramic window, warm fixture lights, and a 360-degree outdoor environment dome at `public/assets/textures/lab_environment.jpg`. It is a spherical sky environment mapped in 3D around the scene, visible through the glazing. AI-generated wood and rubber base-color maps are stored under `tools/blender/textures/`; per-material roughness and normal maps are still generated procedurally and packed into each exported GLB.
-
-## Lab environment
-
-The app includes a four-wall laboratory shell, a framed panoramic window, warm fixture lights, and a 360-degree outdoor environment dome at `public/assets/textures/lab_environment.jpg`. It uses the spherical panorama as a 3D background visible through the glazing. The plaster albedo map is stored at `public/assets/textures/lab_plaster.jpg`. The Blender source folder includes generated wood and rubber base-color maps; material roughness and normal maps are generated procedurally and packed into each exported GLB.
+The app includes a four-wall laboratory shell, textured plaster walls, a framed panoramic window, warm fixture lights, and a 360-degree outdoor environment dome at `public/assets/textures/lab_environment.jpg`. The spherical panorama is mapped as a 3D background and shows through the glazing. The plaster albedo map is at `public/assets/textures/lab_plaster.jpg`. The Blender source folder includes generated wood and rubber base-color maps; per-material roughness and normal maps are generated procedurally and packed into each exported GLB.
 
 ## Output paths
 
