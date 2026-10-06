@@ -22,6 +22,9 @@
 - [x] Build a responsive laboratory shell with English/German locale selection.
 - [x] Add a fixed-step clock with pause, resume, single-step, and reset.
 - [x] Add an initial mechanics scene: ground, ramp, ball, and target.
+- [x] Align the ramp exit with tabletop height, move the target onto the tabletop, and add a no-hop regression test.
+- [x] Add studio key lighting and soft cast shadows; remove controls without behavior and show the prebuilt ramp as already in the scene.
+- [ ] Browser-review the corrected first experiment against the visual reference and tune its staging, contrast, and asset scale.
 - [x] Add ball/cube components from the palette; load the committed ball/cube GLBs as runtime visuals with procedural fallback meshes; keep the ramp prebuilt in the first scene.
 - [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
 - [x] Implement first-lesson completion tracking: only a finished ball satisfies the target, completion persists locally across reset/replay, and storage errors fall back to session-only completion.
@@ -71,6 +74,8 @@
 
 ### 7. Asset and release pipeline
 - Blender source library with named attachment empties, origins, units, and collision meshes.
+- [x] Extend the Blender generator with packed PBR base-color, roughness, and normal maps, plus an equator seam for the ball; document image-generated tileable maps as optional art direction.
+- [ ] Regenerate the committed GLBs and `.blend` sources with the updated PBR generator, then review the actual exported assets in-browser.
 - Blender batch script validates and exports GLB; the repository contains all 29 editable `.blend` sources, GLBs, and the manifest. CI validates manifest paths, Blender source files, glTF 2.0 GLB containers, and required socket nodes. The first lesson loads ball/cube GLBs with primitive fallback; broader catalogue loading and thumbnails remain open.
 - CI validates structured lesson content and model assets, runs solver regression tests, typechecks, and builds production output.
 - Responsive/accessibility QA, localization completeness, performance budgets, deployment documentation.
