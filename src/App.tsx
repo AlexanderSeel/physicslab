@@ -104,7 +104,12 @@ export default function App() {
   const playingRef = useRef(false);
   const [locale, setLocale] = useState<Locale>("en");
   const [playing, setPlaying] = useState(false);
-  const [time, setTime] = useState(0);\n  const [stopwatchTime, setStopwatchTime] = useState(0);\n  const [stopwatchRunning, setStopwatchRunning] = useState(false);\n  const stopwatchRunningRef = useRef(false);\n  const stopwatchElapsedRef = useRef(0);\n  const stopwatchPublishRef = useRef(0);
+  const [time, setTime] = useState(0);
+  const [stopwatchTime, setStopwatchTime] = useState(0);
+  const [stopwatchRunning, setStopwatchRunning] = useState(false);
+  const stopwatchRunningRef = useRef(false);
+  const stopwatchElapsedRef = useRef(0);
+  const stopwatchPublishRef = useRef(0);
   const [bodyCount, setBodyCount] = useState(0);
   const [gravity, setGravity] = useState(9.81);
   const [xray, setXray] = useState(false);
@@ -186,7 +191,15 @@ export default function App() {
 
     const render = () => {
       const delta = Math.min(engine.getDeltaTime() / 1000, 0.05);
-      if (stopwatchRunningRef.current) {\n        stopwatchElapsedRef.current += delta;\n        stopwatchPublishRef.current += delta;\n        if (stopwatchPublishRef.current >= 0.1) {\n          stopwatchPublishRef.current %= 0.1;\n          setStopwatchTime(stopwatchElapsedRef.current);\n        }\n      }\n      if (playingRef.current) {
+      if (stopwatchRunningRef.current) {
+        stopwatchElapsedRef.current += delta;
+        stopwatchPublishRef.current += delta;
+        if (stopwatchPublishRef.current >= 0.1) {
+          stopwatchPublishRef.current %= 0.1;
+          setStopwatchTime(stopwatchElapsedRef.current);
+        }
+      }
+      if (playingRef.current) {
         accumulator.current += delta;
         let changed = false;
         while (accumulator.current >= solverRef.current.fixedStep) {
