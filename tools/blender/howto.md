@@ -24,7 +24,7 @@ The models are a clean, stylized starting point. Review dimensions, socket posit
 2. Clone the `AlexanderSeel/physicslab` repository or open its working copy.
 3. Open PowerShell or a terminal at the repository root.
 
-The generator uses Blender's bundled Python and glTF exporter. You do not need to install Python packages or run Blender interactively.
+The generator uses Blender's bundled Python and glTF exporter. Run the command from the repository root; the current directory is the default asset root, so no --root argument is needed. You do not need to install Python packages or run Blender interactively.
 
 ## Generate the full library
 
@@ -34,13 +34,13 @@ Update the Blender path to match the version installed on your PC:
 
 ```powershell
 $blender = "C:\Program Files\Blender Foundation\Blender 5.3\blender.exe"
-& $blender --background --python tools/blender/generate_assets.py -- --root .
+& $blender --background --python tools/blender/generate_assets.py --
 ```
 
 ### macOS / Linux
 
 ```bash
-blender --background --python tools/blender/generate_assets.py -- --root .
+blender --background --python tools/blender/generate_assets.py --
 ```
 
 The command exits after writing the files. Blender's background mode is intentional: the generator creates the geometry and exports it without needing UI automation.
@@ -50,13 +50,13 @@ The command exits after writing the files. Blender's background mode is intentio
 Use comma-separated asset IDs when iterating on a few models:
 
 ```powershell
-& $blender --background --python tools/blender/generate_assets.py -- --root . --only ball,ramp,water_tank,valve
+& $blender --background --python tools/blender/generate_assets.py -- --only ball,ramp,water_tank,valve
 ```
 
 Skip the editable `.blend` files when you only need to refresh GLB output:
 
 ```powershell
-& $blender --background --python tools/blender/generate_assets.py -- --root . --only ball,ramp --no-blend
+& $blender --background --python tools/blender/generate_assets.py -- --only ball,ramp --no-blend
 ```
 
 Unknown asset IDs stop the run with an error. Subset runs merge their entries into the existing asset manifest.
