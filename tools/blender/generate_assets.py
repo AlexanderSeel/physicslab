@@ -523,7 +523,7 @@ BUILDERS = {
 def parse_args():
     raw = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     parser = argparse.ArgumentParser(description="Generate PhysicsLab Blender source and GLB assets.")
-    parser.add_argument("--root", type=Path, default=Path.cwd(), help="PhysicsLab repository root.")
+    parser.add_argument("--root", type=Path, nargs="?", const=Path.cwd(), default=Path.cwd(), help="PhysicsLab repository root; defaults to the current directory.")
     parser.add_argument("--only", default="", help="Comma-separated asset IDs to generate; default is all.")
     parser.add_argument("--no-blend", action="store_true", help="Skip saving editable .blend source files.")
     args = parser.parse_args(raw)
