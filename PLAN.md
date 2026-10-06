@@ -26,7 +26,7 @@
 - [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
 - [x] Implement first-lesson completion tracking: only a finished ball satisfies the target, completion persists locally across reset/replay, and storage errors fall back to session-only completion.
 - [x] Unit-test persistence across reloads and blocked-storage fallback.
-- [ ] Browser-verify the full Run/Step, reset/replay, model-loading, and ruler toggle/visibility experience.
+- [ ] Browser-verify the full Run/Step, reset/replay, model-loading, ruler toggle/visibility, and stopwatch controls.
 - [x] Add a bilingual fact card with a source link and simple/learn/technical explanation levels.
 - [x] Add production build/typecheck scripts.
 - [x] Move first-lesson science copy into structured bilingual JSON and validate required explanation levels, formula labels, and an HTTPS source.
@@ -36,10 +36,12 @@
 **Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser acceptance checks remain open. Mass/restitution controls remain follow-up work because contact dynamics are not implemented.
 
 ### 1. Mechanical lab
-- Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
-- Object selection/inspection, snapping, undo/redo, save/load, deterministic reset.
-- [x] Add a calibrated 0–8 m ruler to the workbench with 1 m and 0.25 m graduations and EN/DE toolbar feedback.\n- [ ] Add object selection/inspection, snapping, undo/redo, save/load, deterministic reset.\n- [ ] Add independently controlled stopwatch, scale, and energy readouts.\n- Force/velocity X-Ray and lessons for gravity, velocity, acceleration, friction, momentum, collisions, torque, and mechanical advantage.
-- Lessons for gravity, velocity, acceleration, friction, momentum, collisions, torque, and mechanical advantage.
+- [ ] Add Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
+- [ ] Add object selection/inspection, snapping, undo/redo, save/load, and deterministic reset.
+- [x] Add a calibrated 0–8 m ruler to the workbench with 1 m and 0.25 m graduations and EN/DE toolbar feedback.
+- [x] Add an independently controlled stopwatch with start, pause, and reset; resetting the experiment also resets the stopwatch.
+- [ ] Add a scale and energy readouts.
+- Add force/velocity X-Ray and lessons for gravity, velocity, acceleration, friction, momentum, collisions, torque, and mechanical advantage.
 
 ### 2. Fluids and water
 - Separate low-cost fluid network model: tanks, fluid quantity/level, hydrostatic pressure, pipe resistance, flow, valves, pumps, and buoyancy.
