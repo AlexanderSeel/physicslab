@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "motion-01",
+  "source": {
+    "url": "https://openstax.org/books/university-physics-volume-1/pages/11-1-rolling-motion",
+    "title": {
+      "en": "OpenStax · University Physics Vol. 1",
+      "de": "OpenStax · University Physics Bd. 1"
+    }
+  },
+  "formula": {
+    "expression": "a = 5/7 · g sin(θ)",
+    "title": {
+      "en": "ROLLING SPHERE ACCELERATION",
+      "de": "BESCHLEUNIGUNG DER ROLLENDEN KUGEL"
+    },
+    "caption": {
+      "en": "Solid sphere · rolling without slipping",
+      "de": "Vollkugel · Rollen ohne Gleiten"
+    }
+  },
+  "locales": {
+    "en": {
+      "fact": "PHYSICS NOTE",
+      "factTitle": "Gravity along a slope",
+      "simple": "A ramp redirects part of gravity along its surface. A steeper ramp gives the ball more acceleration down the slope.",
+      "learn": "A solid sphere rolling without slipping uses gravity both to move forward and to rotate. That makes its acceleration lower than a frictionless sliding block.",
+      "technical": "For a solid sphere, I = 2/5 mR² and a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), assuming ideal rolling without slipping."
+    },
+    "de": {
+      "fact": "PHYSIK-NOTIZ",
+      "factTitle": "Schwerkraft an einer Schräge",
+      "simple": "Eine Rampe lenkt einen Teil der Schwerkraft entlang ihrer Oberfläche. Je steiler die Rampe, desto stärker beschleunigt der Ball nach unten.",
+      "learn": "Eine rollende Vollkugel nutzt die Schwerkraft sowohl für die Vorwärtsbewegung als auch für die Drehung. Deshalb ist ihre Beschleunigung kleiner als die eines reibungsfrei gleitenden Körpers.",
+      "technical": "Für eine Vollkugel gilt I = 2/5 mR² und a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), bei idealem Rollen ohne Gleiten."
+    }
+  }
+}
