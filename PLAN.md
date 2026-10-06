@@ -18,17 +18,17 @@
 
 ### 0. Foundation and first playable slice — in progress
 - [x] Establish product principles, architecture boundaries, and staged roadmap.
-- [ ] Set up React/Vite/TypeScript and the Babylon scene lifecycle.
-- [ ] Build a responsive laboratory shell with English/German locale selection.
-- [ ] Add a fixed-step clock with pause, resume, single-step, and reset.
-- [ ] Add an initial mechanics scene: ground, ramp, ball, and target.
-- [ ] Add ball/cube/ramp placement from a small component palette.
+- [x] Set up React/Vite/TypeScript and the Babylon scene lifecycle.
+- [x] Build a responsive laboratory shell with English/German locale selection.
+- [x] Add a fixed-step clock with pause, resume, single-step, and reset.
+- [x] Add an initial mechanics scene: ground, ramp, ball, and target.
+- [x] Add ball/cube components from the palette; the ramp is prebuilt in the first scene.
 - [ ] Expose gravity and basic mass/restitution controls.
 - [ ] Add a validated first lesson: roll a ball into a target.
-- [ ] Add a short fact card with source metadata and simple/learn/technical explanation levels.
-- [ ] Add build/typecheck and content-validation checks.
+- [x] Add a bilingual fact card with a source link and simple/learn/technical explanation levels.
+- [x] Add a production build/typecheck workflow; content validation remains open.
 
-**Acceptance:** A learner can place a ball and ramp, run/pause/step/reset the real mechanics simulation, change gravity, and switch the core UI between EN and DE.
+**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, and switch the core interface between EN and DE.
 
 ### 1. Mechanical lab
 - Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
