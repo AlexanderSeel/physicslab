@@ -13,6 +13,7 @@ import {
   Vector3,
 } from "@babylonjs/core";
 import motionLesson from "./content/motion-01.json";
+import { isMotionLessonComplete, persistMotionLessonCompletion } from "./content/lessonProgress";
 import "@babylonjs/loaders/glTF/2.0";
 import { LoadAssetContainerAsync, TransformNode, type AssetContainer } from "@babylonjs/core";
 import { RampSolver, type BodyKind, type BodyState } from "./physics/RampSolver";
@@ -48,17 +49,6 @@ const copy = {
     simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
   },
 } as const;
-
-const LESSON_PROGRESS_KEY = "physicslab.lesson.motion-01";
-
-function readLessonCompletion(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.localStorage.getItem(LESSON_PROGRESS_KEY) === "complete";
-  } catch {
-    return false;
-  }
-}
 
 interface VisualBody { root: TransformNode; fallbackMesh?: Mesh; arrow: Mesh; state: BodyState }
 
@@ -96,17 +86,13 @@ export default function App() {
   const [gravity, setGravity] = useState(9.81);
   const [xray, setXray] = useState(false);
   const [targetReached, setTargetReached] = useState(false);
-  const [lessonCompleted, setLessonCompleted] = useState(readLessonCompletion);
+  const [lessonCompleted, setLessonCompleted] = useState(isMotionLessonComplete);
   const lessonCompletedRef = useRef(lessonCompleted);
   const recordLessonCompletion = useCallback(() => {
     if (lessonCompletedRef.current) return;
     lessonCompletedRef.current = true;
     setLessonCompleted(true);
-    try {
-      window.localStorage.setItem(LESSON_PROGRESS_KEY, "complete");
-    } catch {
-      // The lesson still completes for this session if browser storage is unavailable.
-    }
+    persistMotionLessonCompletion();
   }, []);
   const [depth, setDepth] = useState<"simple" | "learn" | "technical">("simple");
   const xrayRef = useRef(false);
