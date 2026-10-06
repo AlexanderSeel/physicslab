@@ -318,8 +318,20 @@ export default function App() {
       recordLessonCompletion();
     }
   };
+  const toggleStopwatch = () => {
+    stopwatchRunningRef.current = !stopwatchRunningRef.current;
+    setStopwatchRunning(stopwatchRunningRef.current);
+  };
+  const resetStopwatch = () => {
+    stopwatchRunningRef.current = false;
+    stopwatchElapsedRef.current = 0;
+    stopwatchPublishRef.current = 0;
+    setStopwatchRunning(false);
+    setStopwatchTime(0);
+  };
   const reset = () => {
     pause();
+    resetStopwatch();
     visualsRef.current.forEach(disposeVisual);
     visualsRef.current = [];
     solverRef.current.reset();
