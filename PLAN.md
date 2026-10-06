@@ -23,12 +23,12 @@
 - [x] Add a fixed-step clock with pause, resume, single-step, and reset.
 - [x] Add an initial mechanics scene: ground, ramp, ball, and target.
 - [x] Add ball/cube components from the palette; the ramp is prebuilt in the first scene.
-- [ ] Expose gravity and basic mass/restitution controls.
-- [ ] Add a validated first lesson: roll a ball into a target.
+- [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
+- [ ] Add lesson-state validation beyond the current target-reached trigger (reset/replay, completion persistence, and edge cases).
 - [x] Add a bilingual fact card with a source link and simple/learn/technical explanation levels.
-- [x] Add a production build/typecheck workflow; content validation remains open.
+- [x] Add production build/typecheck scripts; verify the build after the locale syntax correction and add structured content validation.
 
-**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, and switch the core interface between EN and DE.
+**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and see a target-reached state. Mass/restitution and robust lesson validation are follow-up work.
 
 ### 1. Mechanical lab
 - Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
@@ -64,7 +64,7 @@
 
 ### 7. Asset and release pipeline
 - Blender source library with named attachment empties, origins, units, and collision meshes.
-- Blender batch script validates and exports GLB, renders catalogue thumbnails, and reports missing metadata.
+- Blender batch script validates and exports GLB, renders catalogue thumbnails, and reports missing metadata. The current generator writes editable `.blend` sources and GLBs plus a manifest; complete a full Blender run and add preview thumbnails/metadata validation before marking this pipeline done.
 - CI validates learning data, typechecks, tests solver invariants, and builds production output.
 - Responsive/accessibility QA, localization completeness, performance budgets, deployment documentation.
 
