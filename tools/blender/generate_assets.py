@@ -116,7 +116,8 @@ def parent_asset(obj, root):
 
 def mesh_material(obj, mat_name, color_key, metallic=0.0, roughness=0.42, emission=0.0):
     obj.data.materials.clear()
-    obj.data.materials.append(material(mat_name, COLORS[color_key], metallic, roughness, emission))
+    color = COLORS[color_key] if isinstance(color_key, str) else color_key
+    obj.data.materials.append(material(mat_name, color, metallic, roughness, emission))
     return obj
 
 
