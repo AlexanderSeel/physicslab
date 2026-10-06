@@ -28,7 +28,8 @@
 - [ ] Browser-verify completion through Run and Step, persistence after reset/reload, and the storage-unavailable fallback.
 - [x] Add a bilingual fact card with a source link and simple/learn/technical explanation levels.
 - [x] Add production build/typecheck scripts.
-- [ ] Run typecheck and production build after the locale syntax correction; add structured learning-content validation.
+- [x] Move first-lesson science copy into structured bilingual JSON and validate required explanation levels, formula labels, and an HTTPS source.
+- [ ] Run project validation, solver tests, typecheck, and production build in the latest GitHub Actions run.
 
 **Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser and production-build acceptance checks remain open. Mass/restitution controls remain follow-up work because contact dynamics are not implemented.
 
@@ -66,8 +67,8 @@
 
 ### 7. Asset and release pipeline
 - Blender source library with named attachment empties, origins, units, and collision meshes.
-- Blender batch script validates and exports GLB, renders catalogue thumbnails, and reports missing metadata. The current generator writes editable `.blend` sources and GLBs plus a manifest; complete a full Blender run and add preview thumbnails/metadata validation before marking this pipeline done.
-- CI validates learning data, typechecks, tests solver invariants, and builds production output.
+- Blender batch script validates and exports GLB; the repository now contains all 29 editable `.blend` sources, GLBs, and the manifest. CI validates manifest paths, source files, and glTF 2.0 GLB containers. Catalogue thumbnails and checks that named sockets survive export remain open.
+- CI validates structured lesson content and model assets, runs solver regression tests, typechecks, and builds production output.
 - Responsive/accessibility QA, localization completeness, performance budgets, deployment documentation.
 
 ## Simulation contracts
