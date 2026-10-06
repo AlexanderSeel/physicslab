@@ -110,6 +110,10 @@ if (manifest) {
                   const json = bytes.subarray(20, 20 + chunkLength).toString("utf8").replace(/\0+$/g, "").trim();
                   const gltf = JSON.parse(json);
                   if (gltf.asset?.version !== "2.0") issues.push(`${label}: glTF asset version must be 2.0`);
+                  const nodeNames = new Set(Array.isArray(gltf.nodes) ? gltf.nodes.map(node => node.name).filter(Boolean) : []);
+                  for (const socket of asset.sockets ?? []) {
+                    if (!nodeNames.has(socket)) issues.push(`${label}: socket node ${socket} is missing from the GLB`);
+                  }
                 } catch {
                   issues.push(`${label}: GLB JSON chunk is not parseable`);
                 }
