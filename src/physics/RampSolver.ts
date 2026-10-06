@@ -11,7 +11,7 @@ export interface BodyState {
 }
 
 const RAMP_START_X = -3.2;
-const RAMP_END_X = 1.9;
+const RAMP_END_X = RAMP_START_X + (RAMP_START_Y - TABLE_TOP) / Math.tan(RAMP_ANGLE);
 const RAMP_ANGLE = 0.235;
 const RAMP_START_Y = 1.31;
 const BODY_RADIUS = 0.22;
@@ -59,7 +59,11 @@ export class RampSolver {
       if (body.x < RAMP_END_X) {
         body.speed += rampAcceleration * (body.kind === "ball" ? ROLLING_FACTOR : 1) * dt;
         body.x += body.speed * Math.cos(RAMP_ANGLE) * dt;
-        body.y = RAMP_START_Y - (body.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(body.kind);
+        // Match the table height on the exact step the body crosses the ramp lip.
+        // This avoids an upward snap from small mesh/solver rounding differences.
+        body.y = body.x >= RAMP_END_X
+          ? TABLE_TOP + bodyHalfHeight(body.kind)
+          : RAMP_START_Y - (body.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(body.kind);
         if (body.kind === "ball") body.rotation -= (body.speed * dt) / BODY_RADIUS;
       } else {
         body.x += body.speed * dt;
