@@ -8,6 +8,10 @@ The first playable experiment is a deterministic ramp-and-motion scene. Add ball
 
 The starter mechanics solver is intentionally focused: it models rolling acceleration down one ramp and motion across the workbench. It is a controlled first lesson model, not yet the general rigid-body system. Havok is planned for the broader mechanics world once the entity, material, and collider conventions have been established.
 
+## Blender asset pipeline
+
+Generate the editable source library, runtime GLB models, and socket/collider manifest with Blender in background mode. See [the Blender asset how-to](./tools/blender/howto.md) and run `blender --background --python tools/blender/generate_assets.py -- --root .` from the repository root.
+
 ## Development
 
 Requires Node.js 22 or newer.
