@@ -10,7 +10,7 @@ The starter mechanics solver is intentionally focused: it models rolling acceler
 
 ## Blender asset pipeline
 
-Generate the editable source library, runtime GLB models, and socket/collider manifest with Blender in background mode. See [the Blender asset how-to](./tools/blender/howto.md) and run `blender --background --python tools/blender/generate_assets.py -- --root .` from the repository root.
+Generate the editable source library, runtime GLB models, and socket/collider manifest with Blender in background mode. See [the Blender asset how-to](./tools/blender/howto.md) and run `blender --background --python tools/blender/generate_assets.py` from the repository root.
 
 ## Development
 
