@@ -13,6 +13,8 @@ import {
   Vector3,
 } from "@babylonjs/core";
 import motionLesson from "./content/motion-01.json";
+import "@babylonjs/loaders/glTF/2.0";
+import { LoadAssetContainerAsync, type AssetContainer, type TransformNode } from "@babylonjs/core";
 import { RampSolver, type BodyKind, type BodyState } from "./physics/RampSolver";
 
 type Locale = "en" | "de";
@@ -58,7 +60,24 @@ function readLessonCompletion(): boolean {
   }
 }
 
-interface VisualBody { mesh: Mesh; state: BodyState }
+interface VisualBody { root: TransformNode; fallbackMesh?: Mesh; arrow: Mesh; state: BodyState }
+
+function attachGlb(visual: VisualBody, container: AssetContainer): void {
+  if (!visual.fallbackMesh) return;
+  const instances = container.instantiateModelsToScene(
+    name => `${name}-body-${visual.state.id}`,
+    true,
+  );
+  if (instances.rootNodes.length === 0) return;
+  for (const node of instances.rootNodes) node.parent = visual.root;
+  visual.fallbackMesh.dispose(false, true);
+  visual.fallbackMesh = undefined;
+}
+
+function disposeVisual(visual: VisualBody): void {
+  visual.arrow.dispose();
+  visual.root.dispose(false, true);
+}
 const bodyRadius = 0.22;
 
 export default function App() {
@@ -67,6 +86,7 @@ export default function App() {
   const engineRef = useRef<Engine | null>(null);
   const solverRef = useRef(new RampSolver());
   const visualsRef = useRef<VisualBody[]>([]);
+  const modelAssetsRef = useRef<Partial<Record<BodyKind, AssetContainer>>>({});
   const accumulator = useRef(0);
   const playingRef = useRef(false);
   const [locale, setLocale] = useState<Locale>("en");
@@ -175,13 +195,33 @@ export default function App() {
       }
       scene.render();
     };
+    let sceneDisposed = false;
+    for (const kind of ["ball", "cube"] as const) {
+      void LoadAssetContainerAsync(`/assets/models/${kind}.glb`, scene)
+        .then(container => {
+          if (sceneDisposed) {
+            container.dispose();
+            return;
+          }
+          modelAssetsRef.current[kind] = container;
+          for (const visual of visualsRef.current) {
+            if (visual.state.kind === kind) attachGlb(visual, container);
+          }
+        })
+        .catch(error => {
+          console.warn(`[PhysicsLab] Could not load ${kind}.glb; keeping the procedural fallback.`, error);
+        });
+    }
     engine.runRenderLoop(render);
     const resize = () => engine.resize();
     window.addEventListener("resize", resize);
     return () => {
       window.removeEventListener("resize", resize);
       engine.stopRenderLoop(render);
-      visualsRef.current.forEach(({ mesh }) => mesh.dispose());
+      sceneDisposed = true;
+      visualsRef.current.forEach(disposeVisual);
+      for (const container of Object.values(modelAssetsRef.current)) container?.dispose();
+      modelAssetsRef.current = {};
       scene.dispose();
       engine.dispose();
       sceneRef.current = null;
@@ -190,12 +230,11 @@ export default function App() {
   }, [recordLessonCompletion]);
 
   const syncBody = (visual: VisualBody) => {
-    const { mesh, state } = visual;
-    mesh.position.set(state.x, state.y, 0);
-    if (state.kind === "ball") mesh.rotation.z = state.rotation;
-    else mesh.rotation.z = state.rotation * 0.35;
+    const { root, arrow, state } = visual;
+    root.position.set(state.x, state.y, 0);
+    if (state.kind === "ball") root.rotation.z = state.rotation;
+    else root.rotation.z = state.rotation * 0.35;
     if (xrayRef.current) {
-      const arrow = mesh.metadata?.arrow as Mesh | undefined;
       if (arrow) {
         arrow.setEnabled(state.speed > 0.04);
         arrow.position.set(state.x, state.y + 0.35, 0);
@@ -203,8 +242,7 @@ export default function App() {
         arrow.scaling.x = length;
       }
     } else {
-      const arrow = mesh.metadata?.arrow as Mesh | undefined;
-      arrow?.setEnabled(false);
+      arrow.setEnabled(false);
     }
   };
 
@@ -215,6 +253,8 @@ export default function App() {
     const mesh = kind === "ball"
       ? MeshBuilder.CreateSphere(`ball-${state.id}`, { diameter: bodyRadius * 2, segments: 32 }, scene)
       : MeshBuilder.CreateBox(`cube-${state.id}`, { size: bodyRadius * 1.75 }, scene);
+    const root = new TransformNode(`body-root-${state.id}`, scene);
+    mesh.parent = root;
     const material = new PBRMaterial(`body-mat-${state.id}`, scene);
     material.albedoColor = kind === "ball" ? Color3.FromHexString("#377d79") : Color3.FromHexString("#7562a6");
     material.metallic = 0.14;
@@ -225,10 +265,11 @@ export default function App() {
     arrowMat.diffuseColor = Color3.FromHexString("#d85638");
     arrow.material = arrowMat;
     arrow.setEnabled(false);
-    mesh.metadata = { arrow };
-    const visual = { mesh, state };
+    const visual: VisualBody = { root, fallbackMesh: mesh, arrow, state };
     visualsRef.current.push(visual);
     syncBody(visual);
+    const modelContainer = modelAssetsRef.current[kind];
+    if (modelContainer) attachGlb(visual, modelContainer);
     setBodyCount(solverRef.current.bodies.length);
   }, [xray]);
 
@@ -252,7 +293,7 @@ export default function App() {
   };
   const reset = () => {
     pause();
-    visualsRef.current.forEach(({ mesh }) => mesh.dispose());
+    visualsRef.current.forEach(disposeVisual);
     visualsRef.current = [];
     solverRef.current.reset();
     accumulator.current = 0;
