@@ -700,6 +700,9 @@ def export_asset(asset_id, spec, args):
 
 def main():
     args = parse_args()
+    # Replace the editable source in place without Blender's default .blend1 backup.
+    # Versioned source should be preserved in git, not duplicated beside each asset.
+    bpy.context.preferences.filepaths.save_version = 0
     selected = [item.strip() for item in args.only.split(",") if item.strip()] if args.only else list(ASSETS)
     unknown = sorted(set(selected) - set(ASSETS))
     if unknown:

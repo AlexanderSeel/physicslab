@@ -102,3 +102,6 @@ The runtime format is glTF 2.0 binary (`.glb`), supported by Blender's glTF expo
 - [Blender glTF 2.0 export manual](https://docs.blender.org/manual/en/5.3/addons/scene_gltf2.html)
 - [Blender background scripting](https://docs.blender.org/api/main/info_advanced_blender_as_bpy.html)
 - [Babylon.js glTF loader](https://doc.babylonjs.com/features/featuresDeepDive/importers/glTF/)
+
+Repeated generation overwrites the existing .blend sources directly. The script sets Blender's save-version count to zero before saving, preventing new .blend1 backup files.
+The code-built lab floor uses the generated seamless terrazzo albedo at public/assets/textures/lab_floor.png; it is a room texture and is not packed into the Blender component GLBs.

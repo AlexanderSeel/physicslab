@@ -64,7 +64,7 @@ function validateDocument(input: unknown): asserts input is PhysicsLabDocument {
       throw new Error(`Body ${index + 1} is invalid.`);
     }
     const body = item as Record<string, unknown>;
-    if (body.kind !== "ball" && body.kind !== "cube") {
+    if (body.kind !== "ball" && body.kind !== "cube" && body.kind !== "domino" && body.kind !== "weight") {
       throw new Error(`Body ${index + 1} has an unsupported type.`);
     }
     if (typeof body.mass !== "number" || !Number.isFinite(body.mass)

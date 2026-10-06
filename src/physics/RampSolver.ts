@@ -1,4 +1,4 @@
-export type BodyKind = "ball" | "cube";
+export type BodyKind = "ball" | "cube" | "domino" | "weight";
 
 export interface BodyState {
   id: number;
@@ -8,6 +8,8 @@ export interface BodyState {
   x: number;
   y: number;
   speed: number;
+  verticalSpeed: number;
+  falling: boolean;
   rotation: number;
   finished: boolean;
 }
@@ -21,12 +23,15 @@ export interface EnergyState {
 const RAMP_START_X = -3.2;
 export const MAX_TRACK_BODIES = 14;
 const RAMP_ANGLE = 0.235;
-const RAMP_START_Y = 1.31;
+const RAMP_START_Y = 1.77;
 const BODY_RADIUS = 0.22;
-const TABLE_TOP = 0.14;
+const TABLE_TOP = 0.6;
+const TABLE_EDGE_X = 5.75;
+const ROOM_FLOOR_Y = -0.43;
+const ROOM_HALF_X = 12.85;
 const RAMP_END_X = RAMP_START_X + (RAMP_START_Y - TABLE_TOP) / Math.tan(RAMP_ANGLE);
-const bodyHalfHeight = (kind: BodyKind) => kind === "ball" ? BODY_RADIUS : BODY_RADIUS * 0.875;
-const bodyHalfLength = (kind: BodyKind) => kind === "ball" ? BODY_RADIUS : BODY_RADIUS * 0.875;
+const bodyHalfHeight = (kind: BodyKind) => kind === "ball" ? BODY_RADIUS : kind === "domino" ? 0.3 : kind === "weight" ? 0.18 : BODY_RADIUS * 0.875;
+const bodyHalfLength = (kind: BodyKind) => kind === "ball" || kind === "weight" ? BODY_RADIUS : kind === "domino" ? 0.08 : BODY_RADIUS * 0.875;
 const ROLLING_FACTOR = 5 / 7;
 
 export class RampSolver {
@@ -89,6 +94,8 @@ export class RampSolver {
         ? RAMP_START_Y - (x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(kind)
         : TABLE_TOP + bodyHalfHeight(kind),
       speed: 0,
+      verticalSpeed: 0,
+      falling: false,
       rotation: 0,
       finished: false,
     };
@@ -100,7 +107,6 @@ export class RampSolver {
     this.elapsed += dt;
     const rampAcceleration = this.gravity * Math.sin(RAMP_ANGLE);
     for (const body of this.bodies) {
-      if (body.finished) continue;
       if (body.x < RAMP_END_X) {
         body.speed += rampAcceleration * (body.kind === "ball" ? ROLLING_FACTOR : 1) * dt;
         body.x += body.speed * Math.cos(RAMP_ANGLE) * dt;
@@ -110,11 +116,32 @@ export class RampSolver {
           ? TABLE_TOP + bodyHalfHeight(body.kind)
           : RAMP_START_Y - (body.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(body.kind);
         if (body.kind === "ball") body.rotation -= (body.speed * dt) / BODY_RADIUS;
+      } else if (body.falling) {
+        body.x += body.speed * dt;
+        body.verticalSpeed -= this.gravity * dt;
+        body.y += body.verticalSpeed * dt;
+        if (body.kind === "ball") body.rotation -= (body.speed * dt) / BODY_RADIUS;
+        if (body.y <= ROOM_FLOOR_Y + bodyHalfHeight(body.kind)) {
+          body.y = ROOM_FLOOR_Y + bodyHalfHeight(body.kind);
+          body.verticalSpeed = 0;
+          body.speed *= Math.max(0, 1 - 1.8 * dt);
+        }
       } else {
         body.x += body.speed * dt;
         body.y = TABLE_TOP + bodyHalfHeight(body.kind);
         if (body.kind === "ball") body.rotation -= (body.speed * dt) / BODY_RADIUS;
         body.speed = Math.sign(body.speed) * Math.max(0, Math.abs(body.speed) - 0.12 * dt);
+        if (body.x + bodyHalfLength(body.kind) >= TABLE_EDGE_X) {
+          body.falling = true;
+        }
+      }
+      if (body.x + bodyHalfLength(body.kind) >= ROOM_HALF_X) {
+        body.x = ROOM_HALF_X - bodyHalfLength(body.kind);
+        body.speed = -Math.abs(body.speed) * body.restitution;
+      }
+      if (body.x - bodyHalfLength(body.kind) <= -ROOM_HALF_X) {
+        body.x = -ROOM_HALF_X + bodyHalfLength(body.kind);
+        body.speed = Math.abs(body.speed) * body.restitution;
       }
       if (body.x >= 4.55) body.finished = true;
     }
@@ -122,38 +149,45 @@ export class RampSolver {
   }
 
   private resolveTrackCollisions(): void {
-    const ordered = this.bodies.filter(body => !body.finished).sort((a, b) => a.x - b.x);
+    const ordered = [...this.bodies].sort((a, b) => a.x - b.x);
     for (let index = 0; index < ordered.length - 1; index += 1) {
       const rear = ordered[index];
       const front = ordered[index + 1];
+      if (Math.abs(rear.y - front.y) >= bodyHalfHeight(rear.kind) + bodyHalfHeight(front.kind)) continue;
       const rearOnRamp = rear.x < RAMP_END_X;
       const frontOnRamp = front.x < RAMP_END_X;
-      if (rearOnRamp !== frontOnRamp) continue;
-
       const halfLength = bodyHalfLength(rear.kind) + bodyHalfLength(front.kind);
-      const horizontalContactDistance = halfLength * (rearOnRamp ? Math.cos(RAMP_ANGLE) : 1);
+      const rampShare = (Number(rearOnRamp) + Number(frontOnRamp)) / 2;
+      const horizontalContactDistance = halfLength * (1 - rampShare * (1 - Math.cos(RAMP_ANGLE)));
       const overlap = rear.x + horizontalContactDistance - front.x;
-      if (overlap <= 0 || rear.speed <= front.speed) continue;
+      if (overlap <= 0) continue;
 
-      // One-dimensional, along-track impact. The minimum restitution keeps
-      // this educational model stable when a pair has slight numerical overlap.
-      const restitution = Math.min(rear.restitution, front.restitution);
-      const combinedMass = rear.mass + front.mass;
-      const rearSpeed = rear.speed;
-      const frontSpeed = front.speed;
-      rear.speed = ((rear.mass - restitution * front.mass) * rearSpeed
-        + (1 + restitution) * front.mass * frontSpeed) / combinedMass;
-      front.speed = ((front.mass - restitution * rear.mass) * frontSpeed
-        + (1 + restitution) * rear.mass * rearSpeed) / combinedMass;
+      if (rear.speed > front.speed) {
+        // One-dimensional along-track impact, with restitution limited to the
+        // less bouncy body. Position correction below also handles separating
+        // bodies whose shapes overlap slightly after a fixed step.
+        const restitution = Math.min(rear.restitution, front.restitution);
+        const combinedMass = rear.mass + front.mass;
+        const rearSpeed = rear.speed;
+        const frontSpeed = front.speed;
+        rear.speed = ((rear.mass - restitution * front.mass) * rearSpeed
+          + (1 + restitution) * front.mass * frontSpeed) / combinedMass;
+        front.speed = ((front.mass - restitution * rear.mass) * frontSpeed
+          + (1 + restitution) * rear.mass * rearSpeed) / combinedMass;
+      }
       rear.x = Math.max(rear.x - overlap * 0.5, RAMP_START_X + 0.01);
       front.x += overlap * 0.5;
 
-      rear.y = rear.x < RAMP_END_X
-        ? RAMP_START_Y - (rear.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(rear.kind)
-        : TABLE_TOP + bodyHalfHeight(rear.kind);
-      front.y = front.x < RAMP_END_X
-        ? RAMP_START_Y - (front.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(front.kind)
-        : TABLE_TOP + bodyHalfHeight(front.kind);
+      if (!rear.falling) {
+        rear.y = rear.x < RAMP_END_X
+          ? RAMP_START_Y - (rear.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(rear.kind)
+          : TABLE_TOP + bodyHalfHeight(rear.kind);
+      }
+      if (!front.falling) {
+        front.y = front.x < RAMP_END_X
+          ? RAMP_START_Y - (front.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(front.kind)
+          : TABLE_TOP + bodyHalfHeight(front.kind);
+      }
     }
   }
 }

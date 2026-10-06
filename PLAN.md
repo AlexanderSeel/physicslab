@@ -26,8 +26,20 @@
 - [x] Add studio key lighting and soft cast shadows; remove controls without behavior and show the prebuilt ramp as already in the scene.
 - [x] Label X-Ray accurately as a velocity vector, align its direction with the ramp, and synchronize lesson progress to completion.
 - [ ] Browser-review the corrected first experiment against the visual reference and tune its staging, contrast, and asset scale.
-- [ ] Tune the first scene's target behavior so a body rolls past or settles naturally at the target instead of stopping abruptly at its center; keep lesson completion based on a target zone, not a forced velocity stop.
-- [ ] Replace the first scene's 1D track-only collision approximation with solid body contacts so balls and cubes cannot pass through or overlap each other, including when they leave the ramp and reach the tabletop.
+- [x] Keep bodies moving after they enter the target zone; target completion records lesson progress without pausing the simulation or freezing the body. Manual pause remains available.
+- [x] Keep the first scene's 1D track contacts active after target completion, correct overlap even when bodies separate, and resolve pairs that straddle the ramp-to-table transition so they cannot pass through one another there.
+- [x] Raise the workbench tabletop from 0.57 m to 0.85 m above the lab floor, let bodies fall and land after rolling off its end, and add a generated terrazzo floor texture.
+- [x] Replace the screen-space target text with a localized, camera-facing label positioned in the 3D scene.
+- [x] Add persistent light/dark themes, increase interface type sizes, and expand the 3D work area with live energy, motion, and path readouts.
+- [x] Make camera view, fullscreen, playback speed, and direct body selection controls functional; keep unimplemented sections out of navigation.
+- [x] Merge the brand, lesson heading, learning journey, language, and theme controls into one compact responsive header.
+- [x] Put velocity, measuring, and setup save/load tools in an on-demand header menu; keep the header to one compact row and remove the large intro block to prioritize the workbench.
+- [x] Give the lab ceiling, workbench legs, and aprons static collision shapes alongside the workbench, ramp, rails, supports, room walls, and floor.
+- [x] Raise the workbench from 0.85 m to 1.03 m above the lab floor while moving the ramp, ruler, target, supports, and solver surface to match.
+- [x] Add ready-to-run Moon gravity, unequal-mass collision, tabletop-edge, and domino-chain experiments to make gravity, mass, restitution, and 3D impacts observable.
+- [x] Add dynamic domino and cylindrical weight bodies, corresponding Blender model previews, and rubber/wood/metal material previews that update the actual friction and appearance.
+- [x] Decorate the back wall with a framed forces poster and a collidable oak display shelf.
+- [ ] Browser-review the updated interface against the reference at desktop, tablet, and mobile sizes.
 - [x] Add a four-wall lab shell, multi-pane window, textured plaster walls, warm fixture lights, and a spherical outdoor environment texture.
 - [x] Apply the generated oak base-color texture to the workbench and ramp surface.
 - [x] Keep the camera and background inside a roofed room with windows on three sides.
@@ -43,52 +55,59 @@
 - [x] Add CI gates for project validation, solver regression tests, typecheck, and production build.
 - [x] Latest GitHub Actions run passed project validation, all five solver/storage tests, TypeScript typecheck, and the Vite production build.
 
-**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity and selected-body properties, compare a track collision, switch the core interface between EN and DE, and complete the objective only by getting a ball into the target zone. Bodies keep moving naturally through the target area, and solid contacts prevent bodies from passing through one another on the ramp and tabletop. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser acceptance checks remain open. The current contact model is constrained to one-dimensional along-track collisions; general 3D contacts and constraints remain with the Havok milestone.
+**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset Havok rigid-body mechanics, change gravity and selected-body mass/restitution, compare collisions, switch the core interface between EN and DE, and complete the objective only by getting a ball into the target zone. Bodies remain simulated after reaching the target. Room/table/ramp colliders are static Havok bodies; balls/cubes are dynamic Havok bodies. The deterministic one-dimensional solver remains a startup-failure fallback. Completion survives reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser acceptance checks remain open.
 
 ### 1. Mechanical lab
-- [ ] Add Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
+- [x] Add Havok collision bodies to the room floor and walls, raised workbench, ramp, and track supports. The first-lesson solver now lets a ball or cube roll past the tabletop edge, fall under gravity, and land on the room floor.
+- [x] Replace the first-lesson ball/cube track integration with Havok dynamic sphere/box bodies, including live mass, restitution, gravity, ramp/table/floor/wall contacts, pause, step, reset, and collision response. Keep the one-dimensional solver only as a startup-failure fallback.
+- [ ] Add Havok-backed weights, platforms, hinges, levers, springs, and dominoes.
 - [ ] Add snapping, undo/redo, complete deterministic scene reset, and persisted camera/scene state. Object selection/inspection and setup save/load are implemented.
+- [x] Select a ball or cube by clicking its 3D mesh; provide functional 3D/side views, fullscreen, and simulation playback speed.
 - [x] Add a calibrated 0–8 m ruler to the workbench with 1 m and 0.25 m graduations and EN/DE toolbar feedback.
 - [x] Add an independently controlled stopwatch with start, pause, and reset; resetting the experiment also resets the stopwatch.
 - [x] Add versioned `.physicslab` setup save/load for gravity, object types, mass, and restitution with range-checked imports, a sample collision setup, and round-trip tests.
 - [x] Add a reference scale readout (1 kg per body) and live potential, kinetic, and total energy calculations for the ramp lesson; rolling-ball energy includes the solid-sphere rotational term.
-- [x] Add adjustable body mass and restitution, energy-aware readouts, and stable 1D collisions between ball and cube on the lesson track.
-- [ ] Replace/extend the constrained lesson-track contact prototype with Havok-backed general 3D contact dynamics.
-- Add force/velocity X-Ray and lessons for gravity, velocity, acceleration, friction, momentum, collisions, torque, and mechanical advantage.
+- [x] Add adjustable body mass and restitution, energy-aware readouts, and stable collision behavior; dynamic scene objects now use Havok material and mass properties.
+- [x] Extend the first mechanics scene from the constrained track prototype to Havok-backed general 3D contact dynamics.
+- [ ] Add force/velocity X-Ray and lessons for gravity, velocity, acceleration, friction, momentum, collisions, torque, and mechanical advantage.
 
 ### 2. Fluids and water
-- Separate low-cost fluid network model: tanks, fluid quantity/level, hydrostatic pressure, pipe resistance, flow, valves, pumps, and buoyancy.
-- Dynamic surface/flow presentation via Babylon meshes, particles, and shaders; visual fluid effects must not be mistaken for the solver.
-- Flow/pressure X-Ray and meters; sourced bilingual facts.
+- [x] Add an independent fixed-step fluid network solver for tank volume/level, hydrostatic pressure, pipe resistance, flow, adjustable valves, pump pressure, and buoyancy.
+- [ ] Add tank/pipes/valves/pumps as workbench objects and let learners connect the network.
+- [ ] Add dynamic surface/flow presentation via Babylon meshes, particles, and shaders; visual fluid effects must not be mistaken for the solver.
+- [ ] Add Flow/pressure X-Ray and meters; sourced bilingual facts.
 
 ### 3. Electricity and cross-domain coupling
-- Circuit graph and solver for batteries, wires, switches, resistors, lamps, motors, generators, and sensors.
-- Couple motor torque into mechanics and mechanical generator output into circuit state.
-- Circuit inspection, voltage/current/power meters, and missions that combine water wheels, generators, and lamps.
+- [x] Add a DC circuit graph solver for batteries, resistors, switches, lamps, motors, and generators, with voltage/current/power readings and motor torque output.
+- [ ] Add circuit parts and wire connections to the workbench with interactive circuit inspection.
+- [ ] Couple motor torque into the mechanical solver and mechanical shaft speed into generator output.
+- [ ] Add voltage/current/power meters and missions that combine water wheels, generators, and lamps.
 
 ### 4. Gas, heat, and fire
-- Gas state and ideal-gas relationships; balloons, pumps, pistons, and valves.
-- Thermal model for heat capacity, conduction, convection approximation, phase changes, and ignition.
-- Particle/shader visuals separated from temperature/energy calculations.
+- [ ] Gas state and ideal-gas relationships; balloons, pumps, pistons, and valves.
+- [ ] Thermal model for heat capacity, conduction, convection approximation, phase changes, and ignition.
+- [ ] Particle/shader visuals separated from temperature/energy calculations.
 
 ### 5. Wind, waves, and magnetism
-- Approximate velocity-field forces for fans, sails, lift/drag, and turbines.
-- Springs, oscillations, sound/wave visualization, resonance, permanent magnets, electromagnets, and induction.
-- Extend X-Ray, instruments, and fact catalog without coupling them to UI rendering.
+- [ ] Approximate velocity-field forces for fans, sails, lift/drag, and turbines.
+- [ ] Springs, oscillations, sound/wave visualization, resonance, permanent magnets, electromagnets, and induction.
+- [ ] Extend X-Ray, instruments, and fact catalog without coupling them to UI rendering.
 
 ### 6. Academy and free lab
-- Learning journeys: Explorer, Student, Builder, Physics Lab; same underlying world.
-- Guided missions with real object/connection validation, pulsing targets, optional hints, and observable consequences.
-- Full categorized component palette, mission/experiment creator, versioned import/export, local progress.
-- Rube Goldberg challenges across mechanical, fluid, electrical, thermal, gas, and air domains.
+- [ ] Learning journeys: Explorer, Student, Builder, Physics Lab; same underlying world.
+- [ ] Guided missions with real object/connection validation, pulsing targets, optional hints, and observable consequences.
+- [ ] Full categorized component palette, mission/experiment creator, versioned import/export, local progress.
+- [ ] Rube Goldberg challenges across mechanical, fluid, electrical, thermal, gas, and air domains.
 
 ### 7. Asset and release pipeline
-- Blender source library with named attachment empties, origins, units, and collision meshes.
+- [ ] Blender source library with named attachment empties, origins, units, and collision meshes.
 - [x] Extend the Blender generator with packed PBR base-color, roughness, and normal maps, plus an equator seam for the ball; document image-generated tileable maps as optional art direction.
-- [ ] Regenerate the committed GLBs and `.blend` sources with the updated PBR generator, then review the actual exported assets in-browser.
-- Blender batch script validates and exports GLB; the repository contains all 29 editable `.blend` sources, GLBs, and the manifest. CI validates manifest paths, Blender source files, glTF 2.0 GLB containers, and required socket nodes. The first lesson loads ball/cube GLBs with primitive fallback; broader catalogue loading and thumbnails remain open.
-- CI validates structured lesson content and model assets, runs solver regression tests, typechecks, and builds production output.
-- Responsive/accessibility QA, localization completeness, performance budgets, deployment documentation.
+- [x] Regenerate the committed GLBs and `.blend` sources with the updated PBR generator.
+- [ ] Review the actual exported assets in-browser.
+- [x] Blender batch script validates and exports GLB; the repository contains all 29 editable `.blend` sources, GLBs, and the manifest. CI validates manifest paths, Blender source files, glTF 2.0 GLB containers, and required socket nodes.
+- [ ] Load the full asset catalogue at runtime and generate component thumbnails.
+- [x] CI validates structured lesson content and model assets, runs solver regression tests, typechecks, and builds production output.
+- [ ] Responsive/accessibility QA, localization completeness, performance budgets, deployment documentation.
 
 ## Simulation contracts
 

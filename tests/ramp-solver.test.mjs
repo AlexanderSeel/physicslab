@@ -80,7 +80,7 @@ test("ramp meets the table without an upward hop", () => {
     crossedRampLip = ball.x >= 1.72;
   }
   assert.equal(crossedRampLip, true, "the ball should reach the level table");
-  assert.ok(Math.abs(ball.y - 0.36) < 0.03, "the body should meet the table at its surface height");
+  assert.ok(Math.abs(ball.y - 0.64) < 0.03, "the body should meet the raised tabletop at its surface height");
 });
 
 test("rolling ball energy transfers from height to motion on the ramp", () => {
