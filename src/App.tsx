@@ -27,7 +27,7 @@ const copy = {
     fact: "PHYSICS NOTE", factTitle: "Gravity along a slope", factText: "A ramp redirects part of gravity along its surface. A steeper ramp gives the ball more acceleration down the slope.",
     learnText: "A solid sphere rolling without slipping uses gravity both to move forward and to rotate. That makes its acceleration lower than a frictionless sliding block.",
     technicalText: "For a solid sphere, I = 2/5 mR² and a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), assuming ideal rolling without slipping.",
-    formulaCaption: "Solid sphere · rolling without slipping", source: "OpenStax · University Physics Vol. 1",,
+    formulaCaption: "Solid sphere · rolling without slipping", source: "OpenStax · University Physics Vol. 1",
     simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "TIME", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: "ROLLING SPHERE ACCELERATION",
   },
   de: {
@@ -41,7 +41,7 @@ const copy = {
     fact: "PHYSIK-NOTIZ", factTitle: "Schwerkraft an einer Schräge", factText: "Eine Rampe lenkt einen Teil der Schwerkraft entlang ihrer Oberfläche. Je steiler die Rampe, desto stärker beschleunigt der Ball nach unten.",
     learnText: "Eine rollende Vollkugel nutzt die Schwerkraft sowohl für die Vorwärtsbewegung als auch für die Drehung. Deshalb ist ihre Beschleunigung kleiner als die eines reibungsfrei gleitenden Körpers.",
     technicalText: "Für eine Vollkugel gilt I = 2/5 mR² und a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), bei idealem Rollen ohne Gleiten.",
-    formulaCaption: "Vollkugel · Rollen ohne Gleiten", source: "OpenStax · University Physics Bd. 1",,
+    formulaCaption: "Vollkugel · Rollen ohne Gleiten", source: "OpenStax · University Physics Bd. 1",
     simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: "BESCHLEUNIGUNG DER ROLLENDEN KUGEL",
   },
 } as const;
