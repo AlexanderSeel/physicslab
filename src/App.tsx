@@ -12,6 +12,7 @@ import {
   StandardMaterial,
   Vector3,
 } from "@babylonjs/core";
+import motionLesson from "./content/motion-01.json";
 import { RampSolver, type BodyKind, type BodyState } from "./physics/RampSolver";
 
 type Locale = "en" | "de";
@@ -24,11 +25,11 @@ const copy = {
     components: "COMPONENTS", mechanics: "MECHANICS", ball: "Ball", cube: "Cube", ramp: "Ramp",
     play: "Run", pause: "Pause", step: "Step", reset: "Reset", gravity: "Gravity", xray: "Force X-Ray",
     ready: "READY TO EXPERIMENT", running: "SIMULATION RUNNING", paused: "SIMULATION PAUSED", success: "TARGET REACHED",
-    fact: "PHYSICS NOTE", factTitle: "Gravity along a slope", factText: "A ramp redirects part of gravity along its surface. A steeper ramp gives the ball more acceleration down the slope.",
-    learnText: "A solid sphere rolling without slipping uses gravity both to move forward and to rotate. That makes its acceleration lower than a frictionless sliding block.",
-    technicalText: "For a solid sphere, I = 2/5 mR² and a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), assuming ideal rolling without slipping.",
-    formulaCaption: "Solid sphere · rolling without slipping", source: "OpenStax · University Physics Vol. 1",
-    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "TIME", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: "ROLLING SPHERE ACCELERATION",
+    fact: motionLesson.locales.en.fact, factTitle: motionLesson.locales.en.factTitle, factText: motionLesson.locales.en.simple,
+    learnText: motionLesson.locales.en.learn,
+    technicalText: motionLesson.locales.en.technical,
+    formulaCaption: motionLesson.formula.caption.en, source: motionLesson.source.title.en,
+    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "TIME", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: motionLesson.formula.title.en,
   },
   de: {
     eyebrow: "PHYSICSLAB / BEWEGUNG 01", title: "Bauen. Beobachten. Verstehen.",
@@ -38,11 +39,11 @@ const copy = {
     components: "BAUTEILE", mechanics: "MECHANIK", ball: "Ball", cube: "Würfel", ramp: "Rampe",
     play: "Start", pause: "Pause", step: "Schritt", reset: "Zurücksetzen", gravity: "Gravitation", xray: "Kraft-Röntgen",
     ready: "BEREIT ZUM EXPERIMENTIEREN", running: "SIMULATION LÄUFT", paused: "SIMULATION PAUSIERT", success: "ZIEL ERREICHT",
-    fact: "PHYSIK-NOTIZ", factTitle: "Schwerkraft an einer Schräge", factText: "Eine Rampe lenkt einen Teil der Schwerkraft entlang ihrer Oberfläche. Je steiler die Rampe, desto stärker beschleunigt der Ball nach unten.",
-    learnText: "Eine rollende Vollkugel nutzt die Schwerkraft sowohl für die Vorwärtsbewegung als auch für die Drehung. Deshalb ist ihre Beschleunigung kleiner als die eines reibungsfrei gleitenden Körpers.",
-    technicalText: "Für eine Vollkugel gilt I = 2/5 mR² und a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), bei idealem Rollen ohne Gleiten.",
-    formulaCaption: "Vollkugel · Rollen ohne Gleiten", source: "OpenStax · University Physics Bd. 1",
-    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: "BESCHLEUNIGUNG DER ROLLENDEN KUGEL",
+    fact: motionLesson.locales.de.fact, factTitle: motionLesson.locales.de.factTitle, factText: motionLesson.locales.de.simple,
+    learnText: motionLesson.locales.de.learn,
+    technicalText: motionLesson.locales.de.technical,
+    formulaCaption: motionLesson.formula.caption.de, source: motionLesson.source.title.de,
+    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
   },
 } as const;
 
@@ -304,7 +305,7 @@ export default function App() {
           </div>
         </section>
 
-        <aside className="right-rail"><div className="inspector-head"><span className="section-kicker">{t.labNotes}</span><button className="more">···</button></div><div className="note-icon">✳</div><div className="note-label">{t.fact}</div><h3>{t.factTitle}</h3><p className="fact-copy">{depth === "simple" ? t.factText : depth === "learn" ? t.learnText : t.technicalText}</p><div className="depth-tabs"><button className={depth === "simple" ? "active" : ""} onClick={() => setDepth("simple")}>{t.simple}</button><button className={depth === "learn" ? "active" : ""} onClick={() => setDepth("learn")}>{t.learn}</button><button className={depth === "technical" ? "active" : ""} onClick={() => setDepth("technical")}>{t.technical}</button></div><div className="formula-card"><div className="formula-title">{t.rollingTitle}</div><div className="formula">a = 5/7 <span>·</span> g sin(θ)</div><div className="formula-caption">{t.formulaCaption}</div></div><div className="source-note"><span className="source-check">↗</span><span><b>{t.factSourceLabel}</b><small>{t.source}</small></span><a className="source-link" href="https://openstax.org/books/university-physics-volume-1/pages/11-1-rolling-motion" target="_blank" rel="noreferrer" aria-label="Open source">↗</a></div><div className="inspector-separator" /><div className="quick-stats"><div><span>{t.objects}</span><b>{bodyCount.toString().padStart(2, "0")}</b></div><div><span>{t.gravityLabel}</span><b>{gravity.toFixed(1)}<small> m/s²</small></b></div><div><span>{t.rampAngle}</span><b>13.5<small>°</small></b></div></div><div className="tip-card"><span>✦</span><p><b>{t.tryThis}</b><br />{locale === "en" ? "What changes when you increase gravity?" : "Was ändert sich, wenn du die Gravitation erhöhst?"}</p><button>→</button></div></aside>
+        <aside className="right-rail"><div className="inspector-head"><span className="section-kicker">{t.labNotes}</span><button className="more">···</button></div><div className="note-icon">✳</div><div className="note-label">{t.fact}</div><h3>{t.factTitle}</h3><p className="fact-copy">{depth === "simple" ? t.factText : depth === "learn" ? t.learnText : t.technicalText}</p><div className="depth-tabs"><button className={depth === "simple" ? "active" : ""} onClick={() => setDepth("simple")}>{t.simple}</button><button className={depth === "learn" ? "active" : ""} onClick={() => setDepth("learn")}>{t.learn}</button><button className={depth === "technical" ? "active" : ""} onClick={() => setDepth("technical")}>{t.technical}</button></div><div className="formula-card"><div className="formula-title">{t.rollingTitle}</div><div className="formula">{motionLesson.formula.expression}</div><div className="formula-caption">{t.formulaCaption}</div></div><div className="source-note"><span className="source-check">↗</span><span><b>{t.factSourceLabel}</b><small>{t.source}</small></span><a className="source-link" href={motionLesson.source.url} target="_blank" rel="noreferrer" aria-label="Open source">↗</a></div><div className="inspector-separator" /><div className="quick-stats"><div><span>{t.objects}</span><b>{bodyCount.toString().padStart(2, "0")}</b></div><div><span>{t.gravityLabel}</span><b>{gravity.toFixed(1)}<small> m/s²</small></b></div><div><span>{t.rampAngle}</span><b>13.5<small>°</small></b></div></div><div className="tip-card"><span>✦</span><p><b>{t.tryThis}</b><br />{locale === "en" ? "What changes when you increase gravity?" : "Was ändert sich, wenn du die Gravitation erhöhst?"}</p><button>→</button></div></aside>
       </div>
       <footer className="footer"><span>PHYSICSLAB <i>·</i> LEARN BY EXPERIMENTING</span><span>SIMULATION 01 <i>·</i> {bodyCount} OBJECTS</span></footer>
     </main>
