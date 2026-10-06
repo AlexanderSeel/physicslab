@@ -183,6 +183,10 @@ export default function App() {
     const roomTop = 6.4;
     const roomHeight = roomTop - roomFloorY;
     const wallMat = mat("warm-lab-plaster", "#d6d0c2", 0, 0.92);
+    const plasterTexture = new Texture("/assets/textures/lab_plaster.jpg", scene, true, false, Texture.TRILINEAR_SAMPLINGMODE);
+    plasterTexture.uScale = 7;
+    plasterTexture.vScale = 3;
+    wallMat.albedoTexture = plasterTexture;
     const trimMat = mat("lab-window-trim", "#44534e", 0.48, 0.36);
     const woodTrimMat = mat("lab-oak-trim", "#966d4b", 0.03, 0.62);
     const glassMat = new StandardMaterial("window-glass", scene);
