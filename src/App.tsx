@@ -32,7 +32,7 @@ const copy = {
     learnText: motionLesson.locales.en.learn,
     technicalText: motionLesson.locales.en.technical,
     formulaCaption: motionLesson.formula.caption.en, source: motionLesson.source.title.en,
-    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "TIME", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", measureOn: "RULER ON", rulerScale: "1 m major · 0.25 m minor", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: motionLesson.formula.title.en,
+    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "SIM TIME", stopwatch: "STOPWATCH", stopwatchStart: "Start stopwatch", stopwatchPause: "Pause stopwatch", stopwatchReset: "Reset stopwatch", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", measureOn: "RULER ON", rulerScale: "1 m major · 0.25 m minor", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: motionLesson.formula.title.en,
   },
   de: {
     eyebrow: "PHYSICSLAB / BEWEGUNG 01", title: "Bauen. Beobachten. Verstehen.",
@@ -46,7 +46,7 @@ const copy = {
     learnText: motionLesson.locales.de.learn,
     technicalText: motionLesson.locales.de.technical,
     formulaCaption: motionLesson.formula.caption.de, source: motionLesson.source.title.de,
-    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", measureOn: "LINEAL AN", rulerScale: "1 m groß · 0,25 m klein", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
+    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "SIM-ZEIT", stopwatch: "STOPPUHR", stopwatchStart: "Stoppuhr starten", stopwatchPause: "Stoppuhr anhalten", stopwatchReset: "Stoppuhr zurücksetzen", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", measureOn: "LINEAL AN", rulerScale: "1 m groß · 0,25 m klein", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
   },
 } as const;
 
@@ -104,7 +104,7 @@ export default function App() {
   const playingRef = useRef(false);
   const [locale, setLocale] = useState<Locale>("en");
   const [playing, setPlaying] = useState(false);
-  const [time, setTime] = useState(0);
+  const [time, setTime] = useState(0);\n  const [stopwatchTime, setStopwatchTime] = useState(0);\n  const [stopwatchRunning, setStopwatchRunning] = useState(false);\n  const stopwatchRunningRef = useRef(false);\n  const stopwatchElapsedRef = useRef(0);\n  const stopwatchPublishRef = useRef(0);
   const [bodyCount, setBodyCount] = useState(0);
   const [gravity, setGravity] = useState(9.81);
   const [xray, setXray] = useState(false);
@@ -186,7 +186,7 @@ export default function App() {
 
     const render = () => {
       const delta = Math.min(engine.getDeltaTime() / 1000, 0.05);
-      if (playingRef.current) {
+      if (stopwatchRunningRef.current) {\n        stopwatchElapsedRef.current += delta;\n        stopwatchPublishRef.current += delta;\n        if (stopwatchPublishRef.current >= 0.1) {\n          stopwatchPublishRef.current %= 0.1;\n          setStopwatchTime(stopwatchElapsedRef.current);\n        }\n      }\n      if (playingRef.current) {
         accumulator.current += delta;
         let changed = false;
         while (accumulator.current >= solverRef.current.fixedStep) {
@@ -358,7 +358,7 @@ export default function App() {
           <div className="scene-frame"><canvas ref={canvasRef} aria-label="Interactive 3D physics workbench" /><div className="scene-badge"><span className={playing ? "badge-dot active" : "badge-dot"} />{targetReached ? t.success : playing ? t.running : time > 0 ? t.paused : t.ready}</div>{measureVisible && <div className="ruler-legend" role="status"><b>{t.measureOn}</b><span>{t.rulerScale}</span></div>}<div className="scene-hint">{t.orbitHint} <span>·</span> {t.zoomHint}</div><div className="target-label">{t.target}<span>04</span></div>
             {xray && <div className="xray-legend"><b>{t.xray.toUpperCase()}</b><span><i className="gravity-line" /> Gravity · {gravity.toFixed(1)} m/s²</span><span><i className="motion-line" /> Velocity</span></div>}
           </div>
-          <div className="transport"><div className="transport-buttons"><button className="reset-button" onClick={reset} title={t.reset}>↺</button>{playing ? <button className="play-button" onClick={pause}>Ⅱ <span>{t.pause}</span></button> : <button className="play-button" onClick={start}>▶ <span>{t.play}</span></button>}<button className="step-button" onClick={step}>▸│ <span>{t.step}</span></button><span className="transport-divider" /><span className="time-readout"><small>{t.time}</small><b>{time.toFixed(2)}<i>s</i></b></span></div>
+          <div className="transport"><div className="transport-buttons"><button className="reset-button" onClick={reset} title={t.reset}>↺</button>{playing ? <button className="play-button" onClick={pause}>Ⅱ <span>{t.pause}</span></button> : <button className="play-button" onClick={start}>▶ <span>{t.play}</span></button>}<button className="step-button" onClick={step}>▸│ <span>{t.step}</span></button><span className="transport-divider" /><span className="time-readout"><small>{t.time}</small><b>{time.toFixed(2)}<i>s</i></b></span><span className="transport-divider stopwatch-divider" /><div className="stopwatch-readout"><span className="stopwatch-value"><small>{t.stopwatch}</small><b>{stopwatchTime.toFixed(1)}<i>s</i></b></span><div className="stopwatch-controls"><button type="button" onClick={toggleStopwatch} aria-label={stopwatchRunning ? t.stopwatchPause : t.stopwatchStart} title={stopwatchRunning ? t.stopwatchPause : t.stopwatchStart}>{stopwatchRunning ? "Ⅱ" : "▶"}</button><button type="button" onClick={resetStopwatch} aria-label={t.stopwatchReset} title={t.stopwatchReset}>↺</button></div></div></div>
             <div className="gravity-control"><label htmlFor="gravity">{t.gravity} <b>{gravity.toFixed(1)} m/s²</b></label><input id="gravity" type="range" min="1" max="25" step="0.1" value={gravity} onChange={e => setGravity(Number(e.target.value))} /><span className="gravity-ends"><span>MOON 1.6</span><span>EARTH 9.8</span><span>JUPITER 24.8</span></span></div>
             <div className="speed-readout"><small>{t.speed}</small><b>{(solverRef.current.bodies.at(-1)?.speed ?? 0).toFixed(1)} <i>m/s</i></b></div>
           </div>
