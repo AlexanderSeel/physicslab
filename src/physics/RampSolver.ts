@@ -10,11 +10,13 @@ export interface BodyState {
   finished: boolean;
 }
 
-const RAMP_START_X = -3.05;
-const RAMP_END_X = 1.75;
+const RAMP_START_X = -3.2;
+const RAMP_END_X = 1.9;
 const RAMP_ANGLE = 0.235;
-const RAMP_START_Y = 1.12;
+const RAMP_START_Y = 1.31;
 const BODY_RADIUS = 0.22;
+const TABLE_TOP = 0.14;
+const bodyHalfHeight = (kind: BodyKind) => kind === "ball" ? BODY_RADIUS : BODY_RADIUS * 0.875;
 const ROLLING_FACTOR = 5 / 7;
 
 export class RampSolver {
@@ -36,7 +38,7 @@ export class RampSolver {
       id: this.nextId++,
       kind,
       x: RAMP_START_X + 0.38 + spacing * 0.52,
-      y: RAMP_START_Y - spacing * Math.tan(RAMP_ANGLE) * 0.52 + BODY_RADIUS,
+      y: RAMP_START_Y - spacing * Math.tan(RAMP_ANGLE) * 0.52 + bodyHalfHeight(kind),
       speed: 0,
       rotation: 0,
       finished: false,
@@ -47,18 +49,18 @@ export class RampSolver {
 
   step(dt = this.fixedStep): void {
     this.elapsed += dt;
-    const rampAcceleration = this.gravity * Math.sin(RAMP_ANGLE) * ROLLING_FACTOR;
+    const rampAcceleration = this.gravity * Math.sin(RAMP_ANGLE);
     for (const body of this.bodies) {
       if (body.finished) continue;
       if (body.x < RAMP_END_X) {
-        body.speed += rampAcceleration * dt;
+        body.speed += rampAcceleration * (body.kind === "ball" ? ROLLING_FACTOR : 1) * dt;
         body.x += body.speed * Math.cos(RAMP_ANGLE) * dt;
-        body.y = RAMP_START_Y - (body.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + BODY_RADIUS;
-        body.rotation -= (body.speed * dt) / BODY_RADIUS;
+        body.y = RAMP_START_Y - (body.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(body.kind);
+        if (body.kind === "ball") body.rotation -= (body.speed * dt) / BODY_RADIUS;
       } else {
         body.x += body.speed * dt;
-        body.y = BODY_RADIUS;
-        body.rotation -= (body.speed * dt) / BODY_RADIUS;
+        body.y = TABLE_TOP + bodyHalfHeight(body.kind);
+        if (body.kind === "ball") body.rotation -= (body.speed * dt) / BODY_RADIUS;
         body.speed = Math.max(0, body.speed - 0.12 * dt);
       }
       if (body.x >= 4.55) body.finished = true;
