@@ -30,6 +30,7 @@ import { parsePhysicsLabDocument, serializePhysicsLabDocument } from "./content/
 import "@babylonjs/loaders/glTF/2.0";
 import { LoadAssetContainerAsync, TransformNode, type AssetContainer } from "@babylonjs/core";
 import { RampSolver, type BodyKind, type BodyState } from "./physics/RampSolver";
+import { ExperimentLab, type LabExperiment } from "./Experiments";
 
 type Locale = "en" | "de";
 type BodyTheme = "rubber" | "wood" | "metal";
@@ -64,7 +65,7 @@ const copy = {
   },
 } as const;
 
-interface VisualBody { root: TransformNode; fallbackMesh?: Mesh; arrow: Mesh; state: BodyState; aggregate?: PhysicsAggregate; theme: BodyTheme }
+interface VisualBody { root: TransformNode; fallbackMesh?: Mesh; arrow: Mesh; state: BodyState; aggregate?: PhysicsAggregate; theme: BodyTheme; pausedVelocity: Vector3; pausedAngularVelocity: Vector3 }
 
 type ViewMode = "3d" | "side";
 
@@ -103,7 +104,7 @@ function attachGlb(visual: VisualBody, container: AssetContainer): void {
 
 function createRulerRig(scene: Scene): TransformNode {
   const root = new TransformNode("meter-ruler", scene);
-  const rulerY = 0.625;
+  const rulerY = tabletopY + 0.025;
   const baseline = MeshBuilder.CreateLines("ruler-baseline", {
     points: [new Vector3(-4, rulerY, -2.35), new Vector3(4, rulerY, -2.35)],
   }, scene);
@@ -130,8 +131,28 @@ function disposeVisual(visual: VisualBody): void {
   visual.arrow.dispose();
   visual.root.dispose(false, true);
 }
+
+function setVisualMotionType(visual: VisualBody, motionType: PhysicsMotionType): void {
+  const body = visual.aggregate?.body;
+  if (!body || body.getMotionType() === motionType) return;
+  if (motionType === PhysicsMotionType.STATIC) {
+    visual.pausedVelocity.copyFrom(body.getLinearVelocity());
+    visual.pausedAngularVelocity.copyFrom(body.getAngularVelocity());
+    body.setMotionType(motionType);
+  } else {
+    body.setMotionType(motionType);
+    body.setLinearVelocity(visual.pausedVelocity);
+    body.setAngularVelocity(visual.pausedAngularVelocity);
+  }
+}
 const bodyRadius = 0.22;
-const tabletopY = 0.6;
+// Elevated work surface, scaled to the requested threefold increase.
+const tabletopY = 2.7;
+const roomFloorY = -0.43;
+const roomTop = 13.23;
+const roomHeight = roomTop - roomFloorY;
+const windowBottom = 1.5;
+const windowTop = 9.3;
 
 const applyBodyTheme = (visual: VisualBody, theme: BodyTheme) => {
   visual.theme = theme;
@@ -143,10 +164,13 @@ const applyBodyTheme = (visual: VisualBody, theme: BodyTheme) => {
   for (const mesh of visual.root.getChildMeshes()) {
     const material = mesh.material;
     if (material instanceof PBRMaterial) {
+      // GLB base-color maps can mask a selected theme tint.
+      material.albedoTexture = null;
       material.albedoColor = Color3.FromHexString(appearance.color);
       material.metallic = appearance.metallic;
       material.roughness = appearance.roughness;
     } else if (material instanceof StandardMaterial) {
+      material.diffuseTexture = null;
       material.diffuseColor = Color3.FromHexString(appearance.color);
     }
   }
@@ -162,7 +186,7 @@ function createDynamicAggregate(visual: VisualBody, scene: Scene): PhysicsAggreg
     state.kind === "ball" ? PhysicsShapeType.SPHERE : state.kind === "weight" ? PhysicsShapeType.CYLINDER : PhysicsShapeType.BOX,
     {
       mass: state.mass,
-      extents: state.kind === "domino" ? new Vector3(0.08, 0.3, 0.12) : new Vector3(bodyRadius * 0.875, bodyRadius * 0.875, bodyRadius * 0.875),
+      extents: state.kind === "domino" ? new Vector3(0.16, 0.6, 0.24) : new Vector3(bodyRadius * 1.75, bodyRadius * 1.75, bodyRadius * 1.75),
       radius: state.kind === "weight" ? 0.2 : bodyRadius,
       pointA: new Vector3(0, -0.18, 0),
       pointB: new Vector3(0, 0.18, 0),
@@ -216,6 +240,7 @@ export default function App() {
   const [fileMessage, setFileMessage] = useState("");
   const experimentInputRef = useRef<HTMLInputElement>(null);
   const [gravity, setGravity] = useState(9.81);
+  const [physicsEngineReady, setPhysicsEngineReady] = useState(false);
   const gravityRef = useRef(9.81);
   const [xray, setXray] = useState(false);
   const [measureVisible, setMeasureVisible] = useState(false);
@@ -232,11 +257,12 @@ export default function App() {
   }, []);
   const [depth, setDepth] = useState<"simple" | "learn" | "technical">("simple");
   const [activeExperiment, setActiveExperiment] = useState<"gravity" | "collision" | "edge" | "domino" | null>(null);
+  const [labExperiment, setLabExperiment] = useState<LabExperiment | null>(null);
   const xrayRef = useRef(false);
   const t = copy[locale];
   const ui = locale === "en"
-    ? { dark: "Dark", light: "Light", switchDark: "Switch to dark mode", switchLight: "Switch to light mode", view3d: "3D View", sideView: "Side View", fullscreen: "Toggle fullscreen", playback: "Playback speed", energy: "Energy", potential: "Potential", kinetic: "Kinetic", totalEnergy: "Total mechanical energy", motion: "Motion", speed: "Speed", position: "Position", simTime: "Sim time", gravity: "Gravity", path: "Path view", top: "top", target: "target", experiments: "TRY AN EXPERIMENT", gravityTest: "Moon gravity", collisionTest: "Mass collision", edgeTest: "Table edge drop", dominoTest: "Domino chain", experimentHint: "Choose a setup, then press Run.", menu: "Tools menu", material: "Body material", rubber: "Rubber", wood: "Wood", metal: "Metal", themeHint: "Material changes surface friction.", massHint: "Mass changes impacts; gravity gives equal free-fall acceleration." }
-    : { dark: "Dunkel", light: "Hell", switchDark: "Dunkelmodus aktivieren", switchLight: "Hellmodus aktivieren", view3d: "3D-Ansicht", sideView: "Seitenansicht", fullscreen: "Vollbild umschalten", playback: "Wiedergabetempo", energy: "Energie", potential: "Potenzial", kinetic: "Kinetisch", totalEnergy: "Mechanische Gesamtenergie", motion: "Bewegung", speed: "Tempo", position: "Position", simTime: "Sim-Zeit", gravity: "Gravitation", path: "Bahnansicht", top: "oben", target: "Ziel", experiments: "EXPERIMENTE", gravityTest: "Mondgravitation", collisionTest: "Massenstoß", edgeTest: "Tischkante", dominoTest: "Dominokette", experimentHint: "Aufbau wählen und Start drücken.", menu: "Werkzeuge", material: "Körpermaterial", rubber: "Gummi", wood: "Holz", metal: "Metall", themeHint: "Material verändert die Reibung.", massHint: "Masse ändert Stöße; im freien Fall ist die Beschleunigung gleich." };
+    ? { dark: "Dark", light: "Light", switchDark: "Switch to dark mode", switchLight: "Switch to light mode", view3d: "3D View", sideView: "Side View", fullscreen: "Toggle fullscreen", playback: "Playback speed", energy: "Energy", potential: "Potential", kinetic: "Kinetic", totalEnergy: "Total mechanical energy", motion: "Motion", speed: "Speed", position: "Position", simTime: "Sim time", gravity: "Gravity", path: "Path view", top: "top", target: "target", experiments: "TRY AN EXPERIMENT", gravityTest: "Moon gravity", collisionTest: "Mass collision", edgeTest: "Bounce: table-edge drop", dominoTest: "Domino chain", experimentHint: "Choose a setup, then press Run.", menu: "Tools menu", material: "Body material", rubber: "Rubber", wood: "Wood", metal: "Metal", themeHint: "Material changes surface friction.", massHint: "Mass changes impacts; gravity gives equal free-fall acceleration.", bounceHint: "Compare low and high bounce on a fall or collision.", havok: "Havok 3D rigid-body contacts", fallback: "Approximate track physics (Havok unavailable)" }
+    : { dark: "Dunkel", light: "Hell", switchDark: "Dunkelmodus aktivieren", switchLight: "Hellmodus aktivieren", view3d: "3D-Ansicht", sideView: "Seitenansicht", fullscreen: "Vollbild umschalten", playback: "Wiedergabetempo", energy: "Energie", potential: "Potenzial", kinetic: "Kinetisch", totalEnergy: "Mechanische Gesamtenergie", motion: "Bewegung", speed: "Tempo", position: "Position", simTime: "Sim-Zeit", gravity: "Gravitation", path: "Bahnansicht", top: "oben", target: "Ziel", experiments: "EXPERIMENTE", gravityTest: "Mondgravitation", collisionTest: "Massenstoß", edgeTest: "Sprung: Fall von der Tischkante", dominoTest: "Dominokette", experimentHint: "Aufbau wählen und Start drücken.", menu: "Werkzeuge", material: "Körpermaterial", rubber: "Gummi", wood: "Holz", metal: "Metall", themeHint: "Material verändert die Reibung.", massHint: "Masse ändert Stöße; im freien Fall ist die Beschleunigung gleich.", bounceHint: "Vergleiche den Rückprall bei einem Fall oder Stoß.", havok: "Havok-3D-Starrkörperkontakte", fallback: "Vereinfachte Bahnphysik (Havok nicht verfügbar)" };
   const currentEnergy = solverRef.current.totalEnergy;
   const totalEnergy = Math.max(currentEnergy.total, 0.001);
   const activeBody = solverRef.current.bodies.find(body => body.id === selectedBodyId) ?? solverRef.current.bodies.at(-1);
@@ -270,10 +296,10 @@ export default function App() {
       }
     }, PointerEventTypes.POINTERPICK);
 
-    const camera = new ArcRotateCamera("camera", -Math.PI / 2.28, 1.18, 12, new Vector3(0.15, 1.35, 0), scene);
+    const camera = new ArcRotateCamera("camera", -Math.PI / 2.28, 1.18, 15.5, new Vector3(0.15, 2.85, 0), scene);
     cameraRef.current = camera;
-    camera.lowerRadiusLimit = 8;
-    camera.upperRadiusLimit = 12.4;
+    camera.lowerRadiusLimit = 10;
+    camera.upperRadiusLimit = 18;
     camera.lowerBetaLimit = 1.13;
     camera.upperBetaLimit = 1.43;
     camera.wheelPrecision = 45;
@@ -281,7 +307,7 @@ export default function App() {
     camera.attachControl(canvas, true);
     new HemisphericLight("softbox", new Vector3(-0.4, 1, -0.25), scene).intensity = 0.78;
     const keyLight = new DirectionalLight("studio-key", new Vector3(-0.4, -1, 0.55), scene);
-    keyLight.position = new Vector3(-4.5, 8, -5.5);
+    keyLight.position = new Vector3(-4.5, 12.2, -5.5);
     keyLight.intensity = 1.35;
     const shadowGenerator = new ShadowGenerator(1024, keyLight);
     shadowGenerator.useBlurExponentialShadowMap = true;
@@ -311,9 +337,6 @@ export default function App() {
     environment.isPickable = false;
     environment.infiniteDistance = true;
 
-    const roomFloorY = -0.43;
-    const roomTop = 6.4;
-    const roomHeight = roomTop - roomFloorY;
     const wallMat = mat("warm-lab-plaster", "#d6d0c2", 0, 0.92);
     const plasterTexture = new Texture("/assets/textures/lab_plaster.jpg", scene, true, false, Texture.TRILINEAR_SAMPLINGMODE);
     plasterTexture.uScale = 7;
@@ -352,24 +375,22 @@ export default function App() {
       const backDepth = roomBackZ - sideWindowEnd;
       wall("lab-side-wall-front", 0.28, roomHeight, frontDepth, x, roomFloorY + roomHeight / 2, (roomFrontZ + sideWindowStart) / 2);
       wall("lab-side-wall-back", 0.28, roomHeight, backDepth, x, roomFloorY + roomHeight / 2, (roomBackZ + sideWindowEnd) / 2);
-      wall("lab-side-wall-sill", 0.28, 1.25 - roomFloorY, sideWindowEnd - sideWindowStart, x, roomFloorY + (1.25 - roomFloorY) / 2, sideWindowCenter);
-      wall("lab-side-wall-header", 0.28, roomTop - 5.15, sideWindowEnd - sideWindowStart, x, 5.15 + (roomTop - 5.15) / 2, sideWindowCenter);
-      const sideGlass = MeshBuilder.CreateBox("side-lab-window", { width: 0.06, height: 3.82, depth: 5.82 }, scene);
-      sideGlass.position.set(insideX, 3.2, sideWindowCenter);
+      wall("lab-side-wall-sill", 0.28, windowBottom - roomFloorY, sideWindowEnd - sideWindowStart, x, roomFloorY + (windowBottom - roomFloorY) / 2, sideWindowCenter);
+      wall("lab-side-wall-header", 0.28, roomTop - windowTop, sideWindowEnd - sideWindowStart, x, windowTop + (roomTop - windowTop) / 2, sideWindowCenter);
+      const sideGlass = MeshBuilder.CreateBox("side-lab-window", { width: 0.06, height: windowTop - windowBottom - 0.08, depth: 5.82 }, scene);
+      sideGlass.position.set(insideX, (windowBottom + windowTop) / 2, sideWindowCenter);
       sideGlass.material = glassMat;
       sideGlass.isPickable = false;
       for (const z of [sideWindowStart, sideWindowCenter, sideWindowEnd]) {
-        wall("side-window-vertical-frame", 0.11, 3.98, 0.075, insideX, 3.2, z, trimMat);
+        wall("side-window-vertical-frame", 0.11, windowTop - windowBottom + 0.14, 0.075, insideX, (windowBottom + windowTop) / 2, z, trimMat);
       }
-      for (const y of [1.25, 3.2, 5.15]) {
+      for (const y of [windowBottom, (windowBottom + windowTop) / 2, windowTop]) {
         wall("side-window-horizontal-frame", 0.11, 0.075, 6.16, insideX, y, sideWindowCenter, trimMat);
       }
-      wall("side-window-oak-sill", 0.38, 0.12, 6.3, x - Math.sign(x) * 0.01, 1.19, sideWindowCenter, woodTrimMat);
+      wall("side-window-oak-sill", 0.38, 0.12, 6.3, x - Math.sign(x) * 0.01, windowBottom - 0.06, sideWindowCenter, woodTrimMat);
     }
     wall("lab-wall-front", 26, roomHeight, 0.28, 0, roomFloorY + roomHeight / 2, roomFrontZ);
     const windowWidth = 10;
-    const windowBottom = 1.25;
-    const windowTop = 5.15;
     const backWallZ = roomBackZ;
     wall("lab-wall-back-left", 8, roomHeight, 0.28, -9, roomFloorY + roomHeight / 2, backWallZ);
     wall("lab-wall-back-right", 8, roomHeight, 0.28, 9, roomFloorY + roomHeight / 2, backWallZ);
@@ -383,7 +404,7 @@ export default function App() {
     for (const x of [-5, -1.7, 1.7, 5]) {
       wall("window-vertical-frame", 0.075, windowTop - windowBottom + 0.14, 0.11, x, (windowTop + windowBottom) / 2, backWallZ + 0.2, trimMat);
     }
-    for (const y of [windowBottom, 3.22, windowTop]) {
+    for (const y of [windowBottom, (windowBottom + windowTop) / 2, windowTop]) {
       wall("window-horizontal-frame", windowWidth + 0.16, 0.075, 0.11, 0, y, backWallZ + 0.2, trimMat);
     }
     wall("back-wall-oak-sill", windowWidth + 0.3, 0.12, 0.38, 0, windowBottom - 0.06, backWallZ - 0.01, woodTrimMat);
@@ -445,9 +466,9 @@ export default function App() {
     ceilingLightMat.disableLighting = true;
     for (const x of [-4.2, 0, 4.2]) {
       const fixture = MeshBuilder.CreateBox("ceiling-light-fixture", { width: 2.4, height: 0.08, depth: 0.58 }, scene);
-      fixture.position.set(x, 5.95, -0.6);
+      fixture.position.set(x, roomTop - 0.55, -0.6);
       fixture.material = ceilingLightMat;
-      const fill = new PointLight("ceiling-fill", new Vector3(x, 5.7, -0.6), scene);
+      const fill = new PointLight("ceiling-fill", new Vector3(x, roomTop - 0.8, -0.6), scene);
       fill.diffuse = Color3.FromHexString("#ffe7c7");
       fill.intensity = 0.22;
       fill.range = 13;
@@ -466,15 +487,16 @@ export default function App() {
     const railMat = mat("rail", "#f09b62", 0.18, 0.38);
     const targetMat = mat("target", "#57a983", 0.1, 0.45);
     const floor = MeshBuilder.CreateBox("workbench", { width: 11.5, height: 0.1, depth: 3.2 }, scene);
-    floor.position.set(0, 0.55, 0);
+    floor.position.set(0, tabletopY - 0.05, 0);
     floor.material = benchMat;
     floor.receiveShadows = true;
     staticPhysicsMeshes.push(floor);
     const benchFrameMat = mat("bench-frame", "#655447", 0.12, 0.62);
     for (const x of [-5.25, 5.25]) {
       for (const z of [-1.35, 1.35]) {
-        const leg = MeshBuilder.CreateBox("workbench-leg", { width: 0.22, height: 0.93, depth: 0.22 }, scene);
-        leg.position.set(x, 0.035, z);
+        const legHeight = tabletopY - 0.1 - (-0.43);
+        const leg = MeshBuilder.CreateBox("workbench-leg", { width: 0.22, height: legHeight, depth: 0.22 }, scene);
+        leg.position.set(x, (-0.43 + tabletopY - 0.1) / 2, z);
         leg.material = benchFrameMat;
         leg.receiveShadows = true;
         leg.metadata = { physicsRole: "static-collider" };
@@ -484,13 +506,13 @@ export default function App() {
     }
     for (const z of [-1.35, 1.35]) {
       const apron = MeshBuilder.CreateBox("workbench-apron", { width: 10.5, height: 0.12, depth: 0.1 }, scene);
-      apron.position.set(0, 0.455, z);
+      apron.position.set(0, tabletopY - 0.145, z);
       apron.material = benchFrameMat;
       apron.metadata = { physicsRole: "static-collider" };
       staticPhysicsMeshes.push(apron);
     }
     const ramp = MeshBuilder.CreateBox("ramp", { width: 5.05, height: 0.16, depth: 1.5 }, scene);
-    ramp.position.set(-0.75, 1.11, 0);
+    ramp.position.set(-0.75, 3.21, 0);
     ramp.rotation.z = -0.235;
     ramp.material = rampMat;
     ramp.receiveShadows = true;
@@ -498,7 +520,7 @@ export default function App() {
     shadowGenerator.addShadowCaster(ramp);
     for (const z of [-0.78, 0.78]) {
       const rail = MeshBuilder.CreateBox("ramp-rail", { width: 5.05, height: 0.12, depth: 0.09 }, scene);
-      rail.position.set(-0.75, 0.99, z);
+      rail.position.set(-0.75, 3.09, z);
       rail.rotation.z = -0.235;
       rail.material = railMat;
       rail.receiveShadows = true;
@@ -519,7 +541,7 @@ export default function App() {
     target.material = targetMat;
     target.receiveShadows = true;
     const targetLabel = MeshBuilder.CreatePlane("target-world-label", { width: 1.3, height: 0.34 }, scene);
-    targetLabel.position.set(4.55, 1.3, 0);
+    targetLabel.position.set(4.55, tabletopY + 0.7, 0);
     targetLabel.billboardMode = Mesh.BILLBOARDMODE_ALL;
     targetLabel.isPickable = false;
     const targetLabelTexture = new DynamicTexture("target-world-label-texture", { width: 512, height: 128 }, scene, false, Texture.TRILINEAR_SAMPLINGMODE);
@@ -581,12 +603,11 @@ export default function App() {
         const advancing = playingRef.current || singlePhysicsStepRef.current;
         const physicsEngine = scene.getPhysicsEngine();
         physicsEngine?.setTimeStep(singlePhysicsStepRef.current ? 1 / 60 : (1 / 60) * playbackSpeedRef.current);
-        for (const visual of visualsRef.current) visual.aggregate?.body.setMotionType(advancing ? PhysicsMotionType.DYNAMIC : PhysicsMotionType.STATIC);
-        scene.render();
+        for (const visual of visualsRef.current) setVisualMotionType(visual, advancing ? PhysicsMotionType.DYNAMIC : PhysicsMotionType.STATIC);
         if (advancing) {
           const elapsedStep = singlePhysicsStepRef.current ? 1 / 60 : delta * playbackSpeedRef.current;
           solverRef.current.elapsed += elapsedStep;
-      for (const visual of visualsRef.current) {
+          for (const visual of visualsRef.current) {
             const { state, root, aggregate } = visual;
             if (!aggregate) continue;
             state.x = root.position.x;
@@ -612,12 +633,14 @@ export default function App() {
           }
           if (singlePhysicsStepRef.current) {
             singlePhysicsStepRef.current = false;
-            for (const visual of visualsRef.current) visual.aggregate?.body.setMotionType(PhysicsMotionType.STATIC);
+            for (const visual of visualsRef.current) setVisualMotionType(visual, PhysicsMotionType.STATIC);
           }
         }
-      } else {
-        scene.render();
       }
+      // The fallback solver also needs a rendered frame while playing. Keeping this
+      // outside the physics-ready branches prevents moving bodies from appearing
+      // only after pause when Havok is still loading or unavailable.
+      scene.render();
     };
     let sceneDisposed = false;
     void import("@babylonjs/havok").then(({ default: initializeHavok }) => initializeHavok()).then(havok => {
@@ -629,6 +652,7 @@ export default function App() {
       }
       for (const visual of visualsRef.current) createDynamicAggregate(visual, scene);
       physicsReadyRef.current = true;
+      setPhysicsEngineReady(true);
     }).catch(error => {
       console.warn("[PhysicsLab] Havok could not initialize; using the first-lesson track solver.", error);
     });
@@ -675,8 +699,7 @@ export default function App() {
     const { root, arrow, state } = visual;
     if (!physicsReadyRef.current || !visual.aggregate) {
       root.position.set(state.x, state.y, 0);
-      if (state.kind === "ball") root.rotation.z = state.rotation;
-      else root.rotation.z = state.rotation * 0.35;
+      root.rotation.z = state.rotation;
     }
     if (xrayRef.current) {
       arrow.rotation.z = state.x < 1.7 ? -0.235 : 0;
@@ -693,7 +716,7 @@ export default function App() {
 
   const placeBodyFromState = (visual: VisualBody) => {
     visual.root.position.set(visual.state.x, visual.state.y, 0);
-    visual.root.rotation.z = visual.state.kind === "ball" ? visual.state.rotation : visual.state.rotation * 0.35;
+    visual.root.rotation.z = visual.state.rotation;
     visual.aggregate?.body.setTargetTransform(visual.root.position, Quaternion.FromEulerAngles(0, 0, visual.root.rotation.z));
   };
 
@@ -729,7 +752,7 @@ export default function App() {
     arrow.material = arrowMat;
     arrow.setEnabled(false);
     const initialTheme: BodyTheme = kind === "domino" ? "wood" : kind === "weight" ? "metal" : "rubber";
-    const visual: VisualBody = { root, fallbackMesh: mesh, arrow, state, theme: initialTheme };
+    const visual: VisualBody = { root, fallbackMesh: mesh, arrow, state, theme: initialTheme, pausedVelocity: Vector3.Zero(), pausedAngularVelocity: Vector3.Zero() };
     visualsRef.current.push(visual);
     syncBody(visual);
     if (physicsReadyRef.current) createDynamicAggregate(visual, scene);
@@ -779,7 +802,7 @@ export default function App() {
   const start = () => {
     if (solverRef.current.bodies.length === 0) addBody("ball");
     accumulator.current = 0;
-    if (physicsReadyRef.current) for (const visual of visualsRef.current) visual.aggregate?.body.setMotionType(PhysicsMotionType.DYNAMIC);
+    if (physicsReadyRef.current) for (const visual of visualsRef.current) setVisualMotionType(visual, PhysicsMotionType.DYNAMIC);
     playingRef.current = true;
     setPlaying(true);
   };
@@ -793,7 +816,7 @@ export default function App() {
   };
   const pause = () => {
     playingRef.current = false;
-    for (const visual of visualsRef.current) visual.aggregate?.body.setMotionType(PhysicsMotionType.STATIC);
+    for (const visual of visualsRef.current) setVisualMotionType(visual, PhysicsMotionType.STATIC);
     setPlaying(false);
   };
   const step = () => {
@@ -801,7 +824,7 @@ export default function App() {
     if (solverRef.current.bodies.length === 0) addBody("ball");
     if (physicsReadyRef.current) {
       singlePhysicsStepRef.current = true;
-      for (const visual of visualsRef.current) visual.aggregate?.body.setMotionType(PhysicsMotionType.DYNAMIC);
+      for (const visual of visualsRef.current) setVisualMotionType(visual, PhysicsMotionType.DYNAMIC);
     } else {
       solverRef.current.step();
       visualsRef.current.forEach(syncBody);
@@ -873,12 +896,15 @@ export default function App() {
         body.x = 5.0;
         body.y = tabletopY + bodyRadius;
         body.speed = 2;
+        body.restitution = 0.85;
         body.falling = false;
         const visual = visualsRef.current.at(-1);
         if (visual) {
+          if (visual.aggregate) visual.aggregate.shape.material = { ...visual.aggregate.shape.material, restitution: body.restitution };
           placeBodyFromState(visual);
           visual.aggregate?.body.setLinearVelocity(new Vector3(body.speed, 0, 0));
         }
+        setBodyRestitution(body.restitution);
       }
     } else {
       setGravity(9.81);
@@ -886,18 +912,18 @@ export default function App() {
       const starter = solverRef.current.bodies.at(-1);
       const starterVisual = visualsRef.current.at(-1);
       if (starter && starterVisual) {
-        starter.x = 0.8;
-        starter.y = tabletopY + bodyRadius;
-        starter.speed = 3.2;
+        // Start the marble on the ramp and let gravity build its speed before
+        // it reaches the domino line; don't fake the impact with an initial push.
+        starter.speed = 0;
         placeBodyFromState(starterVisual);
-        starterVisual.aggregate?.body.setLinearVelocity(new Vector3(starter.speed, 0, 0));
+        starterVisual.aggregate?.body.setLinearVelocity(Vector3.Zero());
       }
-      for (let index = 0; index < 5; index += 1) {
+      for (let index = 0; index < 8; index += 1) {
         addBody("domino");
         const domino = solverRef.current.bodies.at(-1);
         const visual = visualsRef.current.at(-1);
         if (!domino || !visual) continue;
-        domino.x = 1.85 + index * 0.25;
+        domino.x = 2.05 + index * 0.36;
         domino.y = tabletopY + 0.3;
         domino.mass = 0.55;
         domino.restitution = 0.18;
@@ -1017,6 +1043,12 @@ export default function App() {
   }, [measureVisible]);
 
   useEffect(() => {
+    if (!labExperiment) return;
+    playingRef.current = false;
+    setPlaying(false);
+  }, [labExperiment]);
+
+  useEffect(() => {
     xrayRef.current = xray;
     for (const visual of visualsRef.current) syncBody(visual);
   }, [xray]);
@@ -1034,7 +1066,7 @@ export default function App() {
           <div className="rail-heading"><span className="section-kicker">{t.lesson}</span><span className="lesson-number">01 / 08</span></div>
           <h2>{t.lessonTitle}</h2><p className="lesson-copy">{t.lessonBody}</p>
           <div className="progress-track"><span style={{ width: lessonCompleted ? "100%" : "16%" }} /></div><div className="progress-caption"><span>{t.motion}</span><span>{lessonCompleted ? t.lessonCompleted : t.lessonProgress}</span></div>
-          <div className="experiment-picker"><div className="category-label">{ui.experiments}</div><button className={activeExperiment === "gravity" ? "experiment-option active" : "experiment-option"} onClick={() => loadExperiment("gravity")}>{ui.gravityTest}<small>g = 1.6 m/s²</small></button><button className={activeExperiment === "collision" ? "experiment-option active" : "experiment-option"} onClick={() => loadExperiment("collision")}>{ui.collisionTest}<small>2 bodies · different mass</small></button><button className={activeExperiment === "edge" ? "experiment-option active" : "experiment-option"} onClick={() => loadExperiment("edge")}>{ui.edgeTest}<small>v₀ = 2 m/s</small></button><button className={activeExperiment === "domino" ? "experiment-option active" : "experiment-option"} onClick={() => loadExperiment("domino")}>{ui.dominoTest}<small>ball + 5 dominoes</small></button><p>{ui.experimentHint}</p></div>
+          <div className="experiment-picker"><div className="category-label">{ui.experiments}</div><button className={activeExperiment === "gravity" && !labExperiment ? "experiment-option active" : "experiment-option"} onClick={() => { setLabExperiment(null); loadExperiment("gravity"); }}>{ui.gravityTest}<small>g = 1.6 m/s²</small></button><button className={activeExperiment === "collision" && !labExperiment ? "experiment-option active" : "experiment-option"} onClick={() => { setLabExperiment(null); loadExperiment("collision"); }}>{ui.collisionTest}<small>2 bodies · different mass</small></button><button className={activeExperiment === "edge" && !labExperiment ? "experiment-option active" : "experiment-option"} onClick={() => { setLabExperiment(null); loadExperiment("edge"); }}>{ui.edgeTest}<small>v₀ = 2 m/s</small></button><button className={activeExperiment === "domino" && !labExperiment ? "experiment-option active" : "experiment-option"} onClick={() => { setLabExperiment(null); loadExperiment("domino"); }}>{ui.dominoTest}<small>ball + 5 dominoes</small></button><div className="category-label">{locale === "en" ? "OTHER PHYSICS" : "WEITERE PHYSIK"}</div><button className={`experiment-option ${labExperiment === "water" ? "active" : ""}`} onClick={() => setLabExperiment("water")}>{locale === "en" ? "Water flow" : "Wasserströmung"}<small>{locale === "en" ? "Pressure · valves · flow" : "Druck · Ventile · Fluss"}</small></button><button className={`experiment-option ${labExperiment === "electricity" ? "active" : ""}`} onClick={() => setLabExperiment("electricity")}>{locale === "en" ? "Electric circuit" : "Stromkreis"}<small>{locale === "en" ? "Voltage · current · power" : "Spannung · Strom · Leistung"}</small></button><button className={`experiment-option ${labExperiment === "wind" ? "active" : ""}`} onClick={() => setLabExperiment("wind")}>{locale === "en" ? "Wind turbine" : "Windkraftanlage"}<small>{locale === "en" ? "Wind · rotor · output" : "Wind · Rotor · Leistung"}</small></button><p>{ui.experimentHint}</p></div>
           <div className="separator" />
           <div className="rail-heading"><span className="section-kicker">{t.components}</span></div>
           <div className="category-label">{t.mechanics}</div>
@@ -1045,15 +1077,15 @@ export default function App() {
         </aside>
 
         <section className="lab-column">
-          <div className="lab-toolbar"><div className="lab-title"><span className="live-dot" /> <b>{t.workbench}</b><span className="toolbar-divider">/</span><span>{t.rampMotion}</span></div></div>
-          <div className="scene-frame" ref={sceneFrameRef}><canvas ref={canvasRef} aria-label="Interactive 3D physics workbench" /><div className="scene-badge"><span className={playing ? "badge-dot active" : "badge-dot"} />{targetReached ? t.success : playing ? t.running : time > 0 ? t.paused : t.ready}</div><div className="scene-view-tools"><button className={viewMode === "3d" ? "active" : ""} onClick={() => setViewMode("3d")}>{ui.view3d}</button><button className={viewMode === "side" ? "active" : ""} onClick={() => setViewMode("side")}>{ui.sideView}</button><button className="fullscreen-button" onClick={toggleFullscreen} title={ui.fullscreen} aria-label={ui.fullscreen}>⛶</button></div>{fileMessage && <div className="file-message" role="status">{fileMessage}</div>}{measureVisible && <div className="ruler-legend" role="status"><b>{t.measureOn}</b><span>{t.rulerScale}</span></div>}<div className="scene-hint">{t.orbitHint} <span>·</span> {t.zoomHint}</div>
+          <div className="lab-toolbar"><div className="lab-title"><span className="live-dot" /> <b>{t.workbench}</b><span className="toolbar-divider">/</span><span>{labExperiment ? ({ water: locale === "en" ? "Water Flow" : "Wasserströmung", electricity: locale === "en" ? "Electricity" : "Elektrizität", wind: locale === "en" ? "Wind Power" : "Windkraft" }[labExperiment]) : t.rampMotion}</span></div></div>
+          {labExperiment ? <ExperimentLab kind={labExperiment} locale={locale} /> : <><div className="scene-frame" ref={sceneFrameRef}><canvas ref={canvasRef} aria-label="Interactive 3D physics workbench" /><div className="scene-badge"><span className={playing ? "badge-dot active" : "badge-dot"} />{targetReached ? t.success : playing ? t.running : time > 0 ? t.paused : t.ready}</div><div className="scene-view-tools"><button className={viewMode === "3d" ? "active" : ""} onClick={() => setViewMode("3d")}>{ui.view3d}</button><button className={viewMode === "side" ? "active" : ""} onClick={() => setViewMode("side")}>{ui.sideView}</button><button className="fullscreen-button" onClick={toggleFullscreen} title={ui.fullscreen} aria-label={ui.fullscreen}>⛶</button></div>{fileMessage && <div className="file-message" role="status">{fileMessage}</div>}{measureVisible && <div className="ruler-legend" role="status"><b>{t.measureOn}</b><span>{t.rulerScale}</span></div>}<div className="scene-hint">{t.orbitHint} <span>·</span> {t.zoomHint}</div>
             {xray && <div className="xray-legend"><b>{t.xray.toUpperCase()}</b><span><i className="motion-line" /> {t.speed} · {visualsRef.current.at(-1)?.state.speed.toFixed(1) ?? "0.0"} m/s</span></div>}
           </div>
           <div className="transport"><div className="transport-buttons"><button className="reset-button" onClick={reset} title={t.reset}>↺</button>{playing ? <button className="play-button" onClick={pause}>Ⅱ <span>{t.pause}</span></button> : <button className="play-button" onClick={start}>▶ <span>{t.play}</span></button>}<button className="step-button" onClick={step}>▸│ <span>{t.step}</span></button><span className="transport-divider" /><span className="time-readout"><small>{t.time}</small><b>{time.toFixed(2)}<i>s</i></b></span><span className="transport-divider stopwatch-divider" /><div className="stopwatch-readout"><span className="stopwatch-value"><small>{t.stopwatch}</small><b>{stopwatchTime.toFixed(1)}<i>s</i></b></span><div className="stopwatch-controls"><button type="button" onClick={toggleStopwatch} aria-label={stopwatchRunning ? t.stopwatchPause : t.stopwatchStart} title={stopwatchRunning ? t.stopwatchPause : t.stopwatchStart}>{stopwatchRunning ? "Ⅱ" : "▶"}</button><button type="button" onClick={resetStopwatch} aria-label={t.stopwatchReset} title={t.stopwatchReset}>↺</button></div></div></div>
             <label className="playback-control"><span>{ui.playback}</span><input type="range" min="0.25" max="2" step="0.25" value={playbackSpeed} onChange={event => setPlaybackSpeed(Number(event.target.value))} /><b>{playbackSpeed.toFixed(2)}×</b></label>
             <div className="gravity-control"><label htmlFor="gravity">{t.gravity} <b>{gravity.toFixed(1)} m/s²</b></label><input id="gravity" type="range" min="1" max="25" step="0.1" value={gravity} onChange={e => setGravity(Number(e.target.value))} /><span className="gravity-ends"><span>MOON 1.6</span><span>EARTH 9.8</span><span>JUPITER 24.8</span></span></div>
             <div className="speed-readout"><small>{t.speed}</small><b>{(solverRef.current.bodies.at(-1)?.speed ?? 0).toFixed(1)} <i>m/s</i></b></div>
-          </div>
+          </div></>}
           <div className="analysis-grid">
             <section className="analysis-card energy-chart"><h3>{ui.energy} <small>(J)</small></h3><div className="energy-bars"><div><span>{ui.potential}</span><i><b style={{ width: `${(currentEnergy.potential / totalEnergy) * 100}%` }} /></i><strong>{currentEnergy.potential.toFixed(2)}</strong></div><div><span>{ui.kinetic}</span><i><b className="kinetic-bar" style={{ width: `${(currentEnergy.kinetic / totalEnergy) * 100}%` }} /></i><strong>{currentEnergy.kinetic.toFixed(2)}</strong></div></div><div className="energy-total"><span>{ui.totalEnergy}</span><b>{currentEnergy.total.toFixed(2)} J</b></div></section>
             <section className="analysis-card motion-card"><h3>{ui.motion}</h3><div className="motion-metrics"><div><span>{ui.speed}</span><b>{(activeBody?.speed ?? 0).toFixed(2)} m/s</b></div><div><span>{ui.position}</span><b>{(activeBody?.x ?? 0).toFixed(2)} m</b></div><div><span>{ui.simTime}</span><b>{time.toFixed(2)} s</b></div><div><span>{ui.gravity}</span><b>{gravity.toFixed(1)} m/s²</b></div></div></section>
@@ -1061,7 +1093,7 @@ export default function App() {
           </div>
         </section>
 
-          <aside className="right-rail"><div className="inspector-head"><span className="section-kicker">{t.labNotes}</span></div><div className="note-icon">✳</div><div className="note-label">{t.fact}</div><h3>{t.factTitle}</h3><p className="fact-copy">{depth === "simple" ? t.factText : depth === "learn" ? t.learnText : t.technicalText}</p><div className="depth-tabs"><button className={depth === "simple" ? "active" : ""} onClick={() => setDepth("simple")}>{t.simple}</button><button className={depth === "learn" ? "active" : ""} onClick={() => setDepth("learn")}>{t.learn}</button><button className={depth === "technical" ? "active" : ""} onClick={() => setDepth("technical")}>{t.technical}</button></div><div className="formula-card"><div className="formula-title">{t.rollingTitle}</div><div className="formula">{motionLesson.formula.expression}</div><div className="formula-caption">{t.formulaCaption}</div></div><div className="source-note"><span className="source-check">↗</span><span><b>{t.factSourceLabel}</b><small>{t.source}</small></span><a className="source-link" href={motionLesson.source.url} target="_blank" rel="noreferrer" aria-label="Open source">↗</a></div><div className="inspector-separator" /><div className="quick-stats"><div><span>{t.objects}</span><b>{bodyCount.toString().padStart(2, "0")}</b></div><div><span>{t.gravityLabel}</span><b>{gravity.toFixed(1)}<small> m/s²</small></b></div><div><span>{t.rampAngle}</span><b>13.5<small>°</small></b></div><div><span>{t.referenceMass}</span><b>{solverRef.current.bodies.reduce((total, body) => total + body.mass, 0).toFixed(1)}<small> kg</small></b></div><div className="energy-stat"><span>{t.energy}</span><b>{solverRef.current.totalEnergy.total.toFixed(1)}<small> J</small></b></div></div><section className="physics-controls"><div className="material-theme-picker"><div className="material-preview-row"><span className={`material-preview ${selectedBodyTheme} ${activeBody?.kind ?? "ball"}`} /><span><label>{ui.material}</label><b>{ui[selectedBodyTheme]}</b></span></div><div className="material-theme-options"><button type="button" className={selectedBodyTheme === "rubber" ? "active" : ""} disabled={selectedBodyId === null} aria-pressed={selectedBodyTheme === "rubber"} onClick={() => updateSelectedBodyTheme("rubber")}>{ui.rubber}</button><button type="button" className={selectedBodyTheme === "wood" ? "active" : ""} disabled={selectedBodyId === null} aria-pressed={selectedBodyTheme === "wood"} onClick={() => updateSelectedBodyTheme("wood")}>{ui.wood}</button><button type="button" className={selectedBodyTheme === "metal" ? "active" : ""} disabled={selectedBodyId === null} aria-pressed={selectedBodyTheme === "metal"} onClick={() => updateSelectedBodyTheme("metal")}>{ui.metal}</button></div><p>{ui.themeHint}</p></div><label htmlFor="body-select">{t.selectedBody}</label><select id="body-select" value={selectedBodyId ?? ""} onChange={event => selectBody(Number(event.target.value))} disabled={solverRef.current.bodies.length === 0}><option value="" disabled>{t.noBody}</option>{solverRef.current.bodies.map(body => <option key={body.id} value={body.id}>{locale === "en" ? { ball: t.ball, cube: t.cube, domino: t.domino, weight: t.weight }[body.kind] : { ball: "Ball", cube: "Würfel", domino: t.domino, weight: t.weight }[body.kind]} · {String(body.id).padStart(2, "0")}</option>)}</select><button className="remove-body-button" type="button" onClick={removeSelectedBody} disabled={selectedBodyId === null}>{t.removeBody}</button><div className="physics-slider"><label htmlFor="body-mass">{t.mass}<b>{bodyMass.toFixed(2)} kg</b></label><input id="body-mass" type="range" min="0.25" max="5" step="0.25" value={bodyMass} disabled={selectedBodyId === null} onChange={event => updateSelectedBody("mass", Number(event.target.value))} /></div><div className="physics-slider"><label htmlFor="body-restitution">{t.restitution}<b>{bodyRestitution.toFixed(2)}</b></label><input id="body-restitution" type="range" min="0" max="0.9" step="0.05" value={bodyRestitution} disabled={selectedBodyId === null} onChange={event => updateSelectedBody("restitution", Number(event.target.value))} /></div><p>{locale === "en" ? "Havok 3D rigid-body contacts" : "Havok-3D-Starrkörperkontakte"}</p><p className="physics-note">{ui.massHint}</p></section><div className="tip-card"><span>✦</span><p><b>{t.tryThis}</b><br />{locale === "en" ? "What changes when you increase gravity?" : "Was ändert sich, wenn du die Gravitation erhöhst?"}</p></div></aside>
+          <aside className="right-rail"><div className="inspector-head"><span className="section-kicker">{t.labNotes}</span></div><div className="note-icon">✳</div><div className="note-label">{t.fact}</div><h3>{t.factTitle}</h3><p className="fact-copy">{depth === "simple" ? t.factText : depth === "learn" ? t.learnText : t.technicalText}</p><div className="depth-tabs"><button className={depth === "simple" ? "active" : ""} onClick={() => setDepth("simple")}>{t.simple}</button><button className={depth === "learn" ? "active" : ""} onClick={() => setDepth("learn")}>{t.learn}</button><button className={depth === "technical" ? "active" : ""} onClick={() => setDepth("technical")}>{t.technical}</button></div><div className="formula-card"><div className="formula-title">{t.rollingTitle}</div><div className="formula">{motionLesson.formula.expression}</div><div className="formula-caption">{t.formulaCaption}</div></div><div className="source-note"><span className="source-check">↗</span><span><b>{t.factSourceLabel}</b><small>{t.source}</small></span><a className="source-link" href={motionLesson.source.url} target="_blank" rel="noreferrer" aria-label="Open source">↗</a></div><div className="inspector-separator" /><div className="quick-stats"><div><span>{t.objects}</span><b>{bodyCount.toString().padStart(2, "0")}</b></div><div><span>{t.gravityLabel}</span><b>{gravity.toFixed(1)}<small> m/s²</small></b></div><div><span>{t.rampAngle}</span><b>13.5<small>°</small></b></div><div><span>{t.referenceMass}</span><b>{solverRef.current.bodies.reduce((total, body) => total + body.mass, 0).toFixed(1)}<small> kg</small></b></div><div className="energy-stat"><span>{t.energy}</span><b>{solverRef.current.totalEnergy.total.toFixed(1)}<small> J</small></b></div></div><section className="physics-controls"><div className="material-theme-picker"><div className="material-preview-row"><span className={`material-preview ${selectedBodyTheme} ${activeBody?.kind ?? "ball"}`} /><span><label>{ui.material}</label><b>{ui[selectedBodyTheme]}</b></span></div><div className="material-theme-options"><button type="button" className={selectedBodyTheme === "rubber" ? "active" : ""} disabled={selectedBodyId === null} aria-pressed={selectedBodyTheme === "rubber"} onClick={() => updateSelectedBodyTheme("rubber")}>{ui.rubber}</button><button type="button" className={selectedBodyTheme === "wood" ? "active" : ""} disabled={selectedBodyId === null} aria-pressed={selectedBodyTheme === "wood"} onClick={() => updateSelectedBodyTheme("wood")}>{ui.wood}</button><button type="button" className={selectedBodyTheme === "metal" ? "active" : ""} disabled={selectedBodyId === null} aria-pressed={selectedBodyTheme === "metal"} onClick={() => updateSelectedBodyTheme("metal")}>{ui.metal}</button></div><p>{ui.themeHint}</p></div><label htmlFor="body-select">{t.selectedBody}</label><select id="body-select" value={selectedBodyId ?? ""} onChange={event => selectBody(Number(event.target.value))} disabled={solverRef.current.bodies.length === 0}><option value="" disabled>{t.noBody}</option>{solverRef.current.bodies.map(body => <option key={body.id} value={body.id}>{locale === "en" ? { ball: t.ball, cube: t.cube, domino: t.domino, weight: t.weight }[body.kind] : { ball: "Ball", cube: "Würfel", domino: t.domino, weight: t.weight }[body.kind]} · {String(body.id).padStart(2, "0")}</option>)}</select><button className="remove-body-button" type="button" onClick={removeSelectedBody} disabled={selectedBodyId === null}>{t.removeBody}</button><div className="physics-slider"><label htmlFor="body-mass">{t.mass}<b>{bodyMass.toFixed(2)} kg</b></label><input id="body-mass" type="range" min="0.25" max="5" step="0.25" value={bodyMass} disabled={selectedBodyId === null} onChange={event => updateSelectedBody("mass", Number(event.target.value))} /></div><div className="physics-slider"><label htmlFor="body-restitution">{t.restitution}<b>{bodyRestitution.toFixed(2)}</b></label><input id="body-restitution" type="range" min="0" max="0.9" step="0.05" value={bodyRestitution} disabled={selectedBodyId === null} onChange={event => updateSelectedBody("restitution", Number(event.target.value))} /></div><p>{physicsEngineReady ? ui.havok : ui.fallback}</p><p className="physics-note">{ui.massHint} {ui.bounceHint}</p></section><div className="tip-card"><span>✦</span><p><b>{t.tryThis}</b><br />{locale === "en" ? "What changes when you increase gravity?" : "Was ändert sich, wenn du die Gravitation erhöhst?"}</p></div></aside>
       </div>
       <footer className="footer"><span>PHYSICSLAB <i>·</i> LEARN BY EXPERIMENTING</span><span>SIMULATION 01 <i>·</i> {bodyCount} OBJECTS</span></footer>
     </main>

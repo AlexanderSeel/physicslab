@@ -11,6 +11,7 @@ export interface BodyState {
   verticalSpeed: number;
   falling: boolean;
   rotation: number;
+  angularVelocity: number;
   finished: boolean;
 }
 
@@ -23,15 +24,15 @@ export interface EnergyState {
 const RAMP_START_X = -3.2;
 export const MAX_TRACK_BODIES = 14;
 const RAMP_ANGLE = 0.235;
-const RAMP_START_Y = 1.77;
+const RAMP_START_Y = 3.87;
 const BODY_RADIUS = 0.22;
-const TABLE_TOP = 0.6;
+const TABLE_TOP = 2.7;
 const TABLE_EDGE_X = 5.75;
 const ROOM_FLOOR_Y = -0.43;
 const ROOM_HALF_X = 12.85;
 const RAMP_END_X = RAMP_START_X + (RAMP_START_Y - TABLE_TOP) / Math.tan(RAMP_ANGLE);
-const bodyHalfHeight = (kind: BodyKind) => kind === "ball" ? BODY_RADIUS : kind === "domino" ? 0.3 : kind === "weight" ? 0.18 : BODY_RADIUS * 0.875;
-const bodyHalfLength = (kind: BodyKind) => kind === "ball" || kind === "weight" ? BODY_RADIUS : kind === "domino" ? 0.08 : BODY_RADIUS * 0.875;
+const bodyHalfHeight = (kind: BodyKind, rotation = 0) => kind === "ball" ? BODY_RADIUS : kind === "domino" ? Math.abs(Math.cos(rotation)) * 0.3 + Math.abs(Math.sin(rotation)) * 0.08 : kind === "weight" ? 0.18 : BODY_RADIUS * 0.875;
+const bodyHalfLength = (kind: BodyKind, rotation = 0) => kind === "ball" || kind === "weight" ? BODY_RADIUS : kind === "domino" ? Math.abs(Math.cos(rotation)) * 0.08 + Math.abs(Math.sin(rotation)) * 0.3 : BODY_RADIUS * 0.875;
 const ROLLING_FACTOR = 5 / 7;
 
 export class RampSolver {
@@ -97,6 +98,7 @@ export class RampSolver {
       verticalSpeed: 0,
       falling: false,
       rotation: 0,
+      angularVelocity: 0,
       finished: false,
     };
     this.bodies.push(body);
@@ -117,22 +119,54 @@ export class RampSolver {
           : RAMP_START_Y - (body.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(body.kind);
         if (body.kind === "ball") body.rotation -= (body.speed * dt) / BODY_RADIUS;
       } else if (body.falling) {
+        const previousY = body.y;
         body.x += body.speed * dt;
         body.verticalSpeed -= this.gravity * dt;
         body.y += body.verticalSpeed * dt;
         if (body.kind === "ball") body.rotation -= (body.speed * dt) / BODY_RADIUS;
-        if (body.y <= ROOM_FLOOR_Y + bodyHalfHeight(body.kind)) {
-          body.y = ROOM_FLOOR_Y + bodyHalfHeight(body.kind);
-          body.verticalSpeed = 0;
+        // The track fallback must collide with the underside too: a high
+        // restitution bounce from the room floor can rise back under the table.
+        // Without this check fallback bodies tunnel straight through the slab.
+        if (body.verticalSpeed > 0) {
+          const halfHeight = bodyHalfHeight(body.kind, body.rotation);
+          const undersideHits: number[] = [];
+          if (body.x + bodyHalfLength(body.kind, body.rotation) >= -TABLE_EDGE_X
+            && body.x - bodyHalfLength(body.kind, body.rotation) <= TABLE_EDGE_X) {
+            undersideHits.push(TABLE_TOP - 0.1);
+          }
+          if (body.x >= RAMP_START_X - 0.08 && body.x <= RAMP_END_X + 0.08) {
+            const rampUnderside = RAMP_START_Y - (body.x - RAMP_START_X) * Math.tan(RAMP_ANGLE) - 0.16;
+            undersideHits.push(rampUnderside);
+          }
+          const underside = Math.max(...undersideHits.filter(y => previousY + halfHeight <= y && body.y + halfHeight >= y));
+          if (Number.isFinite(underside)) {
+            body.y = underside - halfHeight;
+            body.verticalSpeed = 0;
+          }
+        }
+        if (body.y <= ROOM_FLOOR_Y + bodyHalfHeight(body.kind, body.rotation)) {
+          body.y = ROOM_FLOOR_Y + bodyHalfHeight(body.kind, body.rotation);
+          body.verticalSpeed = Math.abs(body.verticalSpeed) * body.restitution;
+          if (body.verticalSpeed < 0.12) body.verticalSpeed = 0;
           body.speed *= Math.max(0, 1 - 1.8 * dt);
         }
       } else {
         body.x += body.speed * dt;
-        body.y = TABLE_TOP + bodyHalfHeight(body.kind);
+        body.y = body.kind === "domino"
+          ? TABLE_TOP + Math.abs(Math.cos(body.rotation)) * 0.3 + Math.abs(Math.sin(body.rotation)) * 0.08
+          : TABLE_TOP + bodyHalfHeight(body.kind);
         if (body.kind === "ball") body.rotation -= (body.speed * dt) / BODY_RADIUS;
         body.speed = Math.sign(body.speed) * Math.max(0, Math.abs(body.speed) - 0.12 * dt);
         if (body.x + bodyHalfLength(body.kind) >= TABLE_EDGE_X) {
           body.falling = true;
+        }
+      }
+      if (body.kind === "domino" && !body.falling && body.angularVelocity !== 0) {
+        body.angularVelocity += Math.sin(body.rotation) * this.gravity * 0.18 * dt;
+        body.rotation += body.angularVelocity * dt;
+        if (Math.abs(body.rotation) >= Math.PI / 2) {
+          body.rotation = Math.sign(body.rotation) * Math.PI / 2;
+          body.angularVelocity = 0;
         }
       }
       if (body.x + bodyHalfLength(body.kind) >= ROOM_HALF_X) {
@@ -156,7 +190,7 @@ export class RampSolver {
       if (Math.abs(rear.y - front.y) >= bodyHalfHeight(rear.kind) + bodyHalfHeight(front.kind)) continue;
       const rearOnRamp = rear.x < RAMP_END_X;
       const frontOnRamp = front.x < RAMP_END_X;
-      const halfLength = bodyHalfLength(rear.kind) + bodyHalfLength(front.kind);
+      const halfLength = bodyHalfLength(rear.kind, rear.rotation) + bodyHalfLength(front.kind, front.rotation);
       const rampShare = (Number(rearOnRamp) + Number(frontOnRamp)) / 2;
       const horizontalContactDistance = halfLength * (1 - rampShare * (1 - Math.cos(RAMP_ANGLE)));
       const overlap = rear.x + horizontalContactDistance - front.x;
@@ -174,6 +208,11 @@ export class RampSolver {
           + (1 + restitution) * front.mass * frontSpeed) / combinedMass;
         front.speed = ((front.mass - restitution * rear.mass) * frontSpeed
           + (1 + restitution) * rear.mass * rearSpeed) / combinedMass;
+        // A toppling domino receives angular impulse at its upper half, so a
+        // small horizontal impact can tip it instead of translating it intact.
+        if (front.kind === "domino") {
+          front.angularVelocity -= Math.max(2.5, Math.abs(rearSpeed - frontSpeed) * 5.5);
+        }
       }
       rear.x = Math.max(rear.x - overlap * 0.5, RAMP_START_X + 0.01);
       front.x += overlap * 0.5;

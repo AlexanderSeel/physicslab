@@ -35,8 +35,15 @@
 - [x] Merge the brand, lesson heading, learning journey, language, and theme controls into one compact responsive header.
 - [x] Put velocity, measuring, and setup save/load tools in an on-demand header menu; keep the header to one compact row and remove the large intro block to prioritize the workbench.
 - [x] Give the lab ceiling, workbench legs, and aprons static collision shapes alongside the workbench, ramp, rails, supports, room walls, and floor.
-- [x] Raise the workbench from 0.85 m to 1.03 m above the lab floor while moving the ramp, ruler, target, supports, and solver surface to match.
+- [x] Raise the workbench from 1.03 m to 3.13 m above the lab floor while moving the ramp, ruler, target, supports, camera, and solver surface to match.
+- [x] Make body-theme colors override GLB base-color textures, use full-size Havok box colliders for cubes/dominoes, and retain linear/angular velocity while pausing and resuming.
+- [x] Make fallback floor impacts use body restitution and give dominoes angular impulse/toppling behavior in collisions.
+- [x] Double the room height around the raised workbench, stretch the windows and lighting with it, and keep the camera inside the room.
+- [x] Prevent fallback bodies from passing through the table/ramp underside on high-restitution rebounds; make the bounce setup start with an obvious high-bounce material value.
+- [x] Make the domino challenge roll a marble down the ramp into a longer, gravity-driven eight-domino chain and add completion goals to water, circuit, and wind experiments.
 - [x] Add ready-to-run Moon gravity, unequal-mass collision, tabletop-edge, and domino-chain experiments to make gravity, mass, restitution, and 3D impacts observable.
+- [x] Render a frame on every playback tick, including while the deterministic mechanics fallback is advancing.
+- [x] Add selectable water-flow, electric-circuit, and wind-turbine activities with interactive controls and live domain measurements.
 - [x] Add dynamic domino and cylindrical weight bodies, corresponding Blender model previews, and rubber/wood/metal material previews that update the actual friction and appearance.
 - [x] Decorate the back wall with a framed forces poster and a collidable oak display shelf.
 - [ ] Browser-review the updated interface against the reference at desktop, tablet, and mobile sizes.
@@ -73,12 +80,14 @@
 
 ### 2. Fluids and water
 - [x] Add an independent fixed-step fluid network solver for tank volume/level, hydrostatic pressure, pipe resistance, flow, adjustable valves, pump pressure, and buoyancy.
+- [x] Add a first playable 3D two-tank flow experiment with animated water levels, pressure gauge, pump/valve controls, volume/flow readouts, and reset.
 - [ ] Add tank/pipes/valves/pumps as workbench objects and let learners connect the network.
 - [ ] Add dynamic surface/flow presentation via Babylon meshes, particles, and shaders; visual fluid effects must not be mistaken for the solver.
 - [ ] Add Flow/pressure X-Ray and meters; sourced bilingual facts.
 
 ### 3. Electricity and cross-domain coupling
 - [x] Add a DC circuit graph solver for batteries, resistors, switches, lamps, motors, and generators, with voltage/current/power readings and motor torque output.
+- [x] Add a first playable 3D battery/lamp/switch activity with adjustable voltage/resistance, a visible working switch, power-dependent lamp glow, and current/power readouts.
 - [ ] Add circuit parts and wire connections to the workbench with interactive circuit inspection.
 - [ ] Couple motor torque into the mechanical solver and mechanical shaft speed into generator output.
 - [ ] Add voltage/current/power meters and missions that combine water wheels, generators, and lamps.
@@ -89,6 +98,7 @@
 - [ ] Particle/shader visuals separated from temperature/energy calculations.
 
 ### 5. Wind, waves, and magnetism
+- [x] Add a first interactive 3D turbine model with animated blades, wind speed, blade radius, generator load, rotor speed, and output power controls/readouts.
 - [ ] Approximate velocity-field forces for fans, sails, lift/drag, and turbines.
 - [ ] Springs, oscillations, sound/wave visualization, resonance, permanent magnets, electromagnets, and induction.
 - [ ] Extend X-Ray, instruments, and fact catalog without coupling them to UI rendering.
