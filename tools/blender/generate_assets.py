@@ -72,9 +72,10 @@ ASSETS = {
 def clear_scene():
     for obj in list(bpy.data.objects):
         bpy.data.objects.remove(obj, do_unlink=True)
-    for material in list(bpy.data.materials):
-        if material.users == 0:
-            bpy.data.materials.remove(material)
+    for datablocks in (bpy.data.meshes, bpy.data.curves, bpy.data.materials):
+        for block in list(datablocks):
+            if block.users == 0:
+                datablocks.remove(block)
     scene = bpy.context.scene
     scene.unit_settings.system = "METRIC"
     scene.unit_settings.scale_length = 1.0
