@@ -66,13 +66,10 @@ function attachGlb(visual: VisualBody, container: AssetContainer): void {
 
 function createRulerRig(scene: Scene): TransformNode {
   const root = new TransformNode("meter-ruler", scene);
-  const lineMaterial = new StandardMaterial("meter-ruler-material", scene);
-  lineMaterial.emissiveColor = Color3.FromHexString("#477e69");
-  lineMaterial.disableLighting = true;
-
   const baseline = MeshBuilder.CreateLines("ruler-baseline", {
     points: [new Vector3(-4, 0.165, -2.35), new Vector3(4, 0.165, -2.35)],
   }, scene);
+  baseline.color = Color3.FromHexString("#315e4f");
   baseline.parent = root;
 
   for (let index = 0; index <= 32; index += 1) {
@@ -83,11 +80,8 @@ function createRulerRig(scene: Scene): TransformNode {
     const tick = MeshBuilder.CreateLines(`ruler-tick-${index}`, {
       points: [new Vector3(x, 0.165, -2.35), new Vector3(x, 0.165 + height, -2.35)],
     }, scene);
+    tick.color = major ? Color3.FromHexString("#315e4f") : Color3.FromHexString("#719984");
     tick.parent = root;
-  }
-  for (const line of [baseline, ...scene.meshes.filter(mesh => mesh.name.startsWith("ruler-tick-"))]) {
-    line.color = Color3.FromHexString("#477e69");
-    line.material = lineMaterial;
   }
   root.setEnabled(false);
   return root;
@@ -142,7 +136,8 @@ export default function App() {
     camera.wheelPrecision = 45;
     camera.panningSensibility = 0;
     camera.attachControl(canvas, true);
-    new HemisphericLight("softbox", new Vector3(-0.4, 1, -0.25), scene).intensity = 0.9;\n    measureRigRef.current = createRulerRig(scene);
+    new HemisphericLight("softbox", new Vector3(-0.4, 1, -0.25), scene).intensity = 0.9;
+    measureRigRef.current = createRulerRig(scene);
 
     const mat = (name: string, color: string, metallic = 0.1, roughness = 0.6) => {
       const material = new PBRMaterial(name, scene);
@@ -234,6 +229,8 @@ export default function App() {
       window.removeEventListener("resize", resize);
       engine.stopRenderLoop(render);
       sceneDisposed = true;
+      measureRigRef.current?.dispose(false, true);
+      measureRigRef.current = null;
       visualsRef.current.forEach(disposeVisual);
       for (const container of Object.values(modelAssetsRef.current)) container?.dispose();
       modelAssetsRef.current = {};
@@ -320,6 +317,10 @@ export default function App() {
   useEffect(() => {
     solverRef.current.gravity = gravity;
   }, [gravity]);
+
+  useEffect(() => {
+    measureRigRef.current?.setEnabled(measureVisible);
+  }, [measureVisible]);
 
   useEffect(() => {
     xrayRef.current = xray;
