@@ -22,7 +22,7 @@
 - [x] Build a responsive laboratory shell with English/German locale selection.
 - [x] Add a fixed-step clock with pause, resume, single-step, and reset.
 - [x] Add an initial mechanics scene: ground, ramp, ball, and target.
-- [x] Add ball/cube components from the palette; the ramp is prebuilt in the first scene.
+- [x] Add ball/cube components from the palette; load the committed ball/cube GLBs as runtime visuals with procedural fallback meshes; keep the ramp prebuilt in the first scene.
 - [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
 - [x] Implement first-lesson completion tracking: only a finished ball satisfies the target, completion persists locally across reset/replay, and storage errors fall back to session-only completion.
 - [ ] Browser-verify completion through Run and Step, persistence after reset/reload, and the storage-unavailable fallback.
@@ -30,7 +30,7 @@
 - [x] Add production build/typecheck scripts.
 - [x] Move first-lesson science copy into structured bilingual JSON and validate required explanation levels, formula labels, and an HTTPS source.
 - [x] Add CI gates for project validation, solver regression tests, typecheck, and production build.
-- [ ] Confirm the latest GitHub Actions run passes after socket-node validation.
+- [ ] Confirm the latest GitHub Actions run passes after runtime GLB loading changes.
 
 **Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser and production-build acceptance checks remain open. Mass/restitution controls remain follow-up work because contact dynamics are not implemented.
 
@@ -68,7 +68,7 @@
 
 ### 7. Asset and release pipeline
 - Blender source library with named attachment empties, origins, units, and collision meshes.
-- Blender batch script validates and exports GLB; the repository now contains all 29 editable `.blend` sources, GLBs, and the manifest. CI validates manifest paths, Blender source files, glTF 2.0 GLB containers, and required socket nodes. Catalogue thumbnails remain open.
+- Blender batch script validates and exports GLB; the repository contains all 29 editable `.blend` sources, GLBs, and the manifest. CI validates manifest paths, Blender source files, glTF 2.0 GLB containers, and required socket nodes. The first lesson loads ball/cube GLBs with primitive fallback; broader catalogue loading and thumbnails remain open.
 - CI validates structured lesson content and model assets, runs solver regression tests, typechecks, and builds production output.
 - Responsive/accessibility QA, localization completeness, performance budgets, deployment documentation.
 
@@ -82,7 +82,7 @@
 
 ## First asset strategy
 
-1. Use code-generated geometry for the first ball, cube, floor, ramp, supports, and target. This keeps physics dimensions and colliders explicit while the interaction model is changing.
+1. Use the generated ball and cube GLBs for first-lesson visuals, with procedurally generated fallback shapes. Keep the floor, ramp, supports, and target code-built so solver geometry stays explicit while interaction is changing.
 2. Use Blender for distinctive reusable equipment and assets with named attachment markers (hinges, pipe ports, axles, wire terminals, handles), then export GLB.
 3. Use 2D images for lesson illustrations, catalogue thumbnails, labels, and backgrounds. A 2D image-to-3D conversion can help create a rough visual reference or decorative mesh, but it is not reliable enough for accurate, editable, physically meaningful parts. Do not make it the core model workflow.
 4. Provide a manual GLB import path and generated thumbnails; do not require Blender on the learner's device or at runtime.
