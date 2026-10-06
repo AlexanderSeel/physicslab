@@ -127,7 +127,6 @@ export default function App() {
     shadow.material = new StandardMaterial("target-shadow-mat", scene);
     (shadow.material as StandardMaterial).diffuseColor = Color3.FromHexString("#acd2bc");
     (shadow.material as StandardMaterial).alpha = 0.38;
-    setReady(true);
 
     const render = () => {
       const delta = Math.min(engine.getDeltaTime() / 1000, 0.05);
