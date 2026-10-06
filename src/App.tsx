@@ -18,6 +18,7 @@ import {
 } from "@babylonjs/core";
 import motionLesson from "./content/motion-01.json";
 import { isMotionLessonComplete, persistMotionLessonCompletion } from "./content/lessonProgress";
+import { parsePhysicsLabDocument, serializePhysicsLabDocument } from "./content/experimentFile";
 import "@babylonjs/loaders/glTF/2.0";
 import { LoadAssetContainerAsync, TransformNode, type AssetContainer } from "@babylonjs/core";
 import { RampSolver, type BodyKind, type BodyState } from "./physics/RampSolver";
@@ -36,7 +37,7 @@ const copy = {
     learnText: motionLesson.locales.en.learn,
     technicalText: motionLesson.locales.en.technical,
     formulaCaption: motionLesson.formula.caption.en, source: motionLesson.source.title.en,
-    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "SIM TIME", stopwatch: "STOPWATCH", stopwatchStart: "Start stopwatch", stopwatchPause: "Pause stopwatch", stopwatchReset: "Reset stopwatch", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", measureOn: "RULER ON", rulerScale: "1 m major · 0.25 m minor", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: motionLesson.formula.title.en,
+    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "SIM TIME", stopwatch: "STOPWATCH", stopwatchStart: "Start stopwatch", stopwatchPause: "Pause stopwatch", stopwatchReset: "Reset stopwatch", speed: "SPEED", mass: "MASS / BODY", referenceMass: "TOTAL MASS", energy: "TOTAL ENERGY", restitution: "BOUNCE", selectedBody: "SELECT BODY", noBody: "Add a ball or cube to edit its properties.", removeBody: "REMOVE BODY", saveSetup: "Save setup", loadSetup: "Load setup", loadedSetup: "Experiment loaded. Press Run to start.", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", measureOn: "RULER ON", rulerScale: "1 m major · 0.25 m minor", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: motionLesson.formula.title.en,
   },
   de: {
     eyebrow: "PHYSICSLAB / BEWEGUNG 01", title: "Bauen. Beobachten. Verstehen.",
@@ -50,7 +51,7 @@ const copy = {
     learnText: motionLesson.locales.de.learn,
     technicalText: motionLesson.locales.de.technical,
     formulaCaption: motionLesson.formula.caption.de, source: motionLesson.source.title.de,
-    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "SIM-ZEIT", stopwatch: "STOPPUHR", stopwatchStart: "Stoppuhr starten", stopwatchPause: "Stoppuhr anhalten", stopwatchReset: "Stoppuhr zurücksetzen", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", measureOn: "LINEAL AN", rulerScale: "1 m groß · 0,25 m klein", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
+    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "SIM-ZEIT", stopwatch: "STOPPUHR", stopwatchStart: "Stoppuhr starten", stopwatchPause: "Stoppuhr anhalten", stopwatchReset: "Stoppuhr zurücksetzen", speed: "TEMPO", mass: "MASSE / KÖRPER", referenceMass: "GESAMTMASSE", energy: "GESAMTENERGIE", restitution: "RÜCKPRALL", selectedBody: "KÖRPER WÄHLEN", noBody: "Füge einen Ball oder Würfel hinzu, um Eigenschaften zu ändern.", removeBody: "KÖRPER ENTFERNEN", saveSetup: "Aufbau speichern", loadSetup: "Aufbau laden", loadedSetup: "Experiment geladen. Mit Start geht es los.", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", measureOn: "LINEAL AN", rulerScale: "1 m groß · 0,25 m klein", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
   },
 } as const;
 
@@ -120,6 +121,12 @@ export default function App() {
   const stopwatchElapsedRef = useRef(0);
   const stopwatchPublishRef = useRef(0);
   const [bodyCount, setBodyCount] = useState(0);
+  const [selectedBodyId, setSelectedBodyId] = useState<number | null>(null);
+  const [bodyMass, setBodyMass] = useState(1);
+  const [bodyRestitution, setBodyRestitution] = useState(0.35);
+  const [, setPropertyRevision] = useState(0);
+  const [fileMessage, setFileMessage] = useState("");
+  const experimentInputRef = useRef<HTMLInputElement>(null);
   const [gravity, setGravity] = useState(9.81);
   const [xray, setXray] = useState(false);
   const [measureVisible, setMeasureVisible] = useState(false);
@@ -440,6 +447,9 @@ export default function App() {
     const scene = sceneRef.current;
     if (!scene) return;
     const state = solverRef.current.addBody(kind);
+    setSelectedBodyId(state.id);
+    setBodyMass(state.mass);
+    setBodyRestitution(state.restitution);
     const mesh = kind === "ball"
       ? MeshBuilder.CreateSphere(`ball-${state.id}`, { diameter: bodyRadius * 2, segments: 32 }, scene)
       : MeshBuilder.CreateBox(`cube-${state.id}`, { size: bodyRadius * 1.75 }, scene);
@@ -462,6 +472,35 @@ export default function App() {
     if (modelContainer) attachGlb(visual, modelContainer);
     setBodyCount(solverRef.current.bodies.length);
   }, [xray]);
+
+  const selectBody = (id: number) => {
+    const body = solverRef.current.bodies.find(candidate => candidate.id === id);
+    if (!body) return;
+    setSelectedBodyId(body.id);
+    setBodyMass(body.mass);
+    setBodyRestitution(body.restitution);
+  };
+
+  const updateSelectedBody = (property: "mass" | "restitution", value: number) => {
+    const body = solverRef.current.bodies.find(candidate => candidate.id === selectedBodyId);
+    if (!body) return;
+    body[property] = value;
+    if (property === "mass") setBodyMass(value);
+    else setBodyRestitution(value);
+    // Publish a render so the total mass and energy readouts react immediately.
+    setPropertyRevision(revision => revision + 1);
+  };
+
+  const removeSelectedBody = () => {
+    if (selectedBodyId === null || !solverRef.current.removeBody(selectedBodyId)) return;
+    const visualIndex = visualsRef.current.findIndex(visual => visual.state.id === selectedBodyId);
+    if (visualIndex >= 0) disposeVisual(visualsRef.current.splice(visualIndex, 1)[0]);
+    const nextBody = solverRef.current.bodies.at(-1);
+    setBodyCount(solverRef.current.bodies.length);
+    setSelectedBodyId(nextBody?.id ?? null);
+    setBodyMass(nextBody?.mass ?? 1);
+    setBodyRestitution(nextBody?.restitution ?? 0.35);
+  };
 
   const start = () => {
     if (solverRef.current.bodies.length === 0) addBody("ball");
@@ -501,7 +540,54 @@ export default function App() {
     accumulator.current = 0;
     setTime(0);
     setBodyCount(0);
+    setSelectedBodyId(null);
+    setBodyMass(1);
+    setBodyRestitution(0.35);
     setTargetReached(false);
+  };
+
+  const saveSetup = () => {
+    const serialized = serializePhysicsLabDocument({
+      gravity: gravity,
+      bodies: solverRef.current.bodies.map(({ kind, mass, restitution }) => ({ kind, mass, restitution })),
+    });
+    const url = URL.createObjectURL(new Blob([serialized], { type: "application/vnd.physicslab+json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "experiment.physicslab";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setFileMessage(locale === "en" ? "Experiment setup saved." : "Versuchsaufbau gespeichert.");
+  };
+
+  const loadSetup = async (file: File) => {
+    try {
+      const document = parsePhysicsLabDocument(await file.text());
+      if (!sceneRef.current) throw new Error("The 3D scene is not ready yet. Try again in a moment.");
+      reset();
+      solverRef.current.gravity = document.gravity;
+      setGravity(document.gravity);
+      for (const savedBody of document.bodies) {
+        addBody(savedBody.kind);
+        const body = solverRef.current.bodies.at(-1);
+        if (!body) continue;
+        body.mass = savedBody.mass;
+        body.restitution = savedBody.restitution;
+        const visual = visualsRef.current.at(-1);
+        if (visual) syncBody(visual);
+        setBodyMass(body.mass);
+        setBodyRestitution(body.restitution);
+      }
+      setFileMessage(t.loadedSetup);
+    } catch (error) {
+      setFileMessage(error instanceof Error ? error.message : "Could not load this experiment file.");
+    }
+  };
+
+  const selectExperimentFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (file) void loadSetup(file);
   };
 
   useEffect(() => {
@@ -542,8 +628,8 @@ export default function App() {
         </aside>
 
         <section className="lab-column">
-          <div className="lab-toolbar"><div className="lab-title"><span className="live-dot" /> <b>{t.workbench}</b><span className="toolbar-divider">/</span><span>{t.rampMotion}</span></div><div className="toolbar-tools"><button className={xray ? "tool-button selected" : "tool-button"} onClick={() => setXray(!xray)}><span>◉</span> {t.xray}</button><button className={measureVisible ? "tool-button selected" : "tool-button"} aria-pressed={measureVisible} onClick={() => setMeasureVisible(value => !value)}><span>⌗</span> {t.measure}</button> </div></div>
-          <div className="scene-frame"><canvas ref={canvasRef} aria-label="Interactive 3D physics workbench" /><div className="scene-badge"><span className={playing ? "badge-dot active" : "badge-dot"} />{targetReached ? t.success : playing ? t.running : time > 0 ? t.paused : t.ready}</div>{measureVisible && <div className="ruler-legend" role="status"><b>{t.measureOn}</b><span>{t.rulerScale}</span></div>}<div className="scene-hint">{t.orbitHint} <span>·</span> {t.zoomHint}</div><div className="target-label">{t.target}<span>04</span></div>
+          <div className="lab-toolbar"><div className="lab-title"><span className="live-dot" /> <b>{t.workbench}</b><span className="toolbar-divider">/</span><span>{t.rampMotion}</span></div><div className="toolbar-tools"><button className={xray ? "tool-button selected" : "tool-button"} onClick={() => setXray(!xray)}><span>◉</span> {t.xray}</button><button className={measureVisible ? "tool-button selected" : "tool-button"} aria-pressed={measureVisible} onClick={() => setMeasureVisible(value => !value)}><span>⌗</span> {t.measure}</button><button className="tool-button project-file-button" onClick={saveSetup} aria-label={t.saveSetup} title={t.saveSetup}><span>↓</span> {t.saveSetup}</button><button className="tool-button project-file-button" onClick={() => experimentInputRef.current?.click()} aria-label={t.loadSetup} title={t.loadSetup}><span>↑</span> {t.loadSetup}</button><input ref={experimentInputRef} className="visually-hidden-file" type="file" accept=".physicslab,application/json" onChange={selectExperimentFile} /> </div></div>
+          <div className="scene-frame"><canvas ref={canvasRef} aria-label="Interactive 3D physics workbench" /><div className="scene-badge"><span className={playing ? "badge-dot active" : "badge-dot"} />{targetReached ? t.success : playing ? t.running : time > 0 ? t.paused : t.ready}</div>{fileMessage && <div className="file-message" role="status">{fileMessage}</div>}{measureVisible && <div className="ruler-legend" role="status"><b>{t.measureOn}</b><span>{t.rulerScale}</span></div>}<div className="scene-hint">{t.orbitHint} <span>·</span> {t.zoomHint}</div><div className="target-label">{t.target}<span>04</span></div>
             {xray && <div className="xray-legend"><b>{t.xray.toUpperCase()}</b><span><i className="motion-line" /> {t.speed} · {visualsRef.current.at(-1)?.state.speed.toFixed(1) ?? "0.0"} m/s</span></div>}
           </div>
           <div className="transport"><div className="transport-buttons"><button className="reset-button" onClick={reset} title={t.reset}>↺</button>{playing ? <button className="play-button" onClick={pause}>Ⅱ <span>{t.pause}</span></button> : <button className="play-button" onClick={start}>▶ <span>{t.play}</span></button>}<button className="step-button" onClick={step}>▸│ <span>{t.step}</span></button><span className="transport-divider" /><span className="time-readout"><small>{t.time}</small><b>{time.toFixed(2)}<i>s</i></b></span><span className="transport-divider stopwatch-divider" /><div className="stopwatch-readout"><span className="stopwatch-value"><small>{t.stopwatch}</small><b>{stopwatchTime.toFixed(1)}<i>s</i></b></span><div className="stopwatch-controls"><button type="button" onClick={toggleStopwatch} aria-label={stopwatchRunning ? t.stopwatchPause : t.stopwatchStart} title={stopwatchRunning ? t.stopwatchPause : t.stopwatchStart}>{stopwatchRunning ? "Ⅱ" : "▶"}</button><button type="button" onClick={resetStopwatch} aria-label={t.stopwatchReset} title={t.stopwatchReset}>↺</button></div></div></div>
@@ -552,7 +638,7 @@ export default function App() {
           </div>
         </section>
 
-        <aside className="right-rail"><div className="inspector-head"><span className="section-kicker">{t.labNotes}</span></div><div className="note-icon">✳</div><div className="note-label">{t.fact}</div><h3>{t.factTitle}</h3><p className="fact-copy">{depth === "simple" ? t.factText : depth === "learn" ? t.learnText : t.technicalText}</p><div className="depth-tabs"><button className={depth === "simple" ? "active" : ""} onClick={() => setDepth("simple")}>{t.simple}</button><button className={depth === "learn" ? "active" : ""} onClick={() => setDepth("learn")}>{t.learn}</button><button className={depth === "technical" ? "active" : ""} onClick={() => setDepth("technical")}>{t.technical}</button></div><div className="formula-card"><div className="formula-title">{t.rollingTitle}</div><div className="formula">{motionLesson.formula.expression}</div><div className="formula-caption">{t.formulaCaption}</div></div><div className="source-note"><span className="source-check">↗</span><span><b>{t.factSourceLabel}</b><small>{t.source}</small></span><a className="source-link" href={motionLesson.source.url} target="_blank" rel="noreferrer" aria-label="Open source">↗</a></div><div className="inspector-separator" /><div className="quick-stats"><div><span>{t.objects}</span><b>{bodyCount.toString().padStart(2, "0")}</b></div><div><span>{t.gravityLabel}</span><b>{gravity.toFixed(1)}<small> m/s²</small></b></div><div><span>{t.rampAngle}</span><b>13.5<small>°</small></b></div></div><div className="tip-card"><span>✦</span><p><b>{t.tryThis}</b><br />{locale === "en" ? "What changes when you increase gravity?" : "Was ändert sich, wenn du die Gravitation erhöhst?"}</p></div></aside>
+          <aside className="right-rail"><div className="inspector-head"><span className="section-kicker">{t.labNotes}</span></div><div className="note-icon">✳</div><div className="note-label">{t.fact}</div><h3>{t.factTitle}</h3><p className="fact-copy">{depth === "simple" ? t.factText : depth === "learn" ? t.learnText : t.technicalText}</p><div className="depth-tabs"><button className={depth === "simple" ? "active" : ""} onClick={() => setDepth("simple")}>{t.simple}</button><button className={depth === "learn" ? "active" : ""} onClick={() => setDepth("learn")}>{t.learn}</button><button className={depth === "technical" ? "active" : ""} onClick={() => setDepth("technical")}>{t.technical}</button></div><div className="formula-card"><div className="formula-title">{t.rollingTitle}</div><div className="formula">{motionLesson.formula.expression}</div><div className="formula-caption">{t.formulaCaption}</div></div><div className="source-note"><span className="source-check">↗</span><span><b>{t.factSourceLabel}</b><small>{t.source}</small></span><a className="source-link" href={motionLesson.source.url} target="_blank" rel="noreferrer" aria-label="Open source">↗</a></div><div className="inspector-separator" /><div className="quick-stats"><div><span>{t.objects}</span><b>{bodyCount.toString().padStart(2, "0")}</b></div><div><span>{t.gravityLabel}</span><b>{gravity.toFixed(1)}<small> m/s²</small></b></div><div><span>{t.rampAngle}</span><b>13.5<small>°</small></b></div><div><span>{t.referenceMass}</span><b>{solverRef.current.bodies.reduce((total, body) => total + body.mass, 0).toFixed(1)}<small> kg</small></b></div><div className="energy-stat"><span>{t.energy}</span><b>{solverRef.current.totalEnergy.total.toFixed(1)}<small> J</small></b></div></div><section className="physics-controls"><label htmlFor="body-select">{t.selectedBody}</label><select id="body-select" value={selectedBodyId ?? ""} onChange={event => selectBody(Number(event.target.value))} disabled={solverRef.current.bodies.length === 0}><option value="" disabled>{t.noBody}</option>{solverRef.current.bodies.map(body => <option key={body.id} value={body.id}>{locale === "en" ? body.kind : body.kind === "ball" ? "Ball" : "Würfel"} · {String(body.id).padStart(2, "0")}</option>)}</select><button className="remove-body-button" type="button" onClick={removeSelectedBody} disabled={selectedBodyId === null}>{t.removeBody}</button><div className="physics-slider"><label htmlFor="body-mass">{t.mass}<b>{bodyMass.toFixed(2)} kg</b></label><input id="body-mass" type="range" min="0.25" max="5" step="0.25" value={bodyMass} disabled={selectedBodyId === null} onChange={event => updateSelectedBody("mass", Number(event.target.value))} /></div><div className="physics-slider"><label htmlFor="body-restitution">{t.restitution}<b>{bodyRestitution.toFixed(2)}</b></label><input id="body-restitution" type="range" min="0" max="0.9" step="0.05" value={bodyRestitution} disabled={selectedBodyId === null} onChange={event => updateSelectedBody("restitution", Number(event.target.value))} /></div><p>{locale === "en" ? "Track collisions · 1D model" : "Bahnstöße · 1D-Modell"}</p></section><div className="tip-card"><span>✦</span><p><b>{t.tryThis}</b><br />{locale === "en" ? "What changes when you increase gravity?" : "Was ändert sich, wenn du die Gravitation erhöhst?"}</p></div></aside>
       </div>
       <footer className="footer"><span>PHYSICSLAB <i>·</i> LEARN BY EXPERIMENTING</span><span>SIMULATION 01 <i>·</i> {bodyCount} OBJECTS</span></footer>
     </main>

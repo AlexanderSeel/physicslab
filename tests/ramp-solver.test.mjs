@@ -41,6 +41,16 @@ test("reset clears active bodies, elapsed time, and target completion", () => {
   assert.equal(simulation.addBody("ball").id, 1, "entity IDs restart deterministically");
 });
 
+test("removing one selected body leaves the rest of the simulation intact", () => {
+  const simulation = new RampSolver();
+  const first = simulation.addBody("ball");
+  const second = simulation.addBody("cube");
+
+  assert.equal(simulation.removeBody(first.id), true);
+  assert.deepEqual(simulation.bodies.map(body => body.id), [second.id]);
+  assert.equal(simulation.removeBody(first.id), false, "unknown IDs should be ignored");
+});
+
 test("fixed-step runs are deterministic for matching inputs", () => {
   const run = () => {
     const simulation = new RampSolver();
@@ -71,4 +81,48 @@ test("ramp meets the table without an upward hop", () => {
   }
   assert.equal(crossedRampLip, true, "the ball should reach the level table");
   assert.ok(Math.abs(ball.y - 0.36) < 0.03, "the body should meet the table at its surface height");
+});
+
+test("rolling ball energy transfers from height to motion on the ramp", () => {
+  const simulation = new RampSolver();
+  const ball = simulation.addBody("ball");
+  const initialEnergy = simulation.energyFor(ball).total;
+  for (let i = 0; i < 60; i += 1) simulation.step();
+  const energy = simulation.energyFor(ball);
+
+  assert.ok(energy.kinetic > 0, "the falling ball gains kinetic energy");
+  assert.ok(energy.potential < initialEnergy, "the ball loses potential energy as it descends");
+  assert.ok(Math.abs(energy.total - initialEnergy) / initialEnergy < 0.02,
+    "the rolling model should conserve mechanical energy within the fixed-step integration tolerance");
+  assert.deepEqual(simulation.totalEnergy, energy, "the lab readout should sum the energy of all bodies");
+});
+
+test("different body types collide on the ramp using mass and restitution", () => {
+  const simulation = new RampSolver();
+  const cube = simulation.addBody("cube");
+  const ball = simulation.addBody("ball");
+  cube.mass = 2;
+  ball.mass = 1;
+  cube.restitution = 0.5;
+  ball.restitution = 0.5;
+
+  let impactObserved = false;
+  let impactMomentumError = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < 240 && !impactObserved; i += 1) {
+    const momentumBefore = cube.mass * cube.speed + ball.mass * ball.speed;
+    simulation.step();
+    if (cube.speed < ball.speed && cube.x < 1.7) {
+      const gravityImpulse = (cube.mass + ball.mass * (5 / 7))
+        * simulation.gravity * Math.sin(0.235) * simulation.fixedStep;
+      const momentumAfter = cube.mass * cube.speed + ball.mass * ball.speed;
+      impactMomentumError = Math.abs(momentumAfter - momentumBefore - gravityImpulse);
+      impactObserved = true;
+    }
+  }
+
+  assert.equal(impactObserved, true, "the faster cube should catch the rolling ball");
+  assert.ok(cube.x + (0.22 * 0.875) * Math.cos(0.235) <= ball.x - 0.22 * Math.cos(0.235) + 1e-6,
+    "collision resolution should keep the bodies from overlapping");
+  assert.ok(impactMomentumError < 1e-8, "the impact should conserve along-track momentum, aside from gravity's step impulse");
+  assert.ok(simulation.energyFor(cube).kinetic > 0, "the rebound should retain physically meaningful motion");
 });

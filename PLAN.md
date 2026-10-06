@@ -31,7 +31,7 @@
 - [x] Keep the camera and background inside a roofed room with windows on three sides.
 - [x] Align Blender grounded-origin GLBs to the solver’s center-origin bodies.
 - [x] Add ball/cube components from the palette; load the committed ball/cube GLBs as runtime visuals with procedural fallback meshes; keep the ramp prebuilt in the first scene.
-- [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
+- [x] Expose gravity control and selected-body mass/restitution controls backed by the along-track contact model.
 - [x] Implement first-lesson completion tracking: only a finished ball satisfies the target, completion persists locally across reset/replay, and storage errors fall back to session-only completion.
 - [x] Unit-test persistence across reloads and blocked-storage fallback.
 - [ ] Browser-verify the full Run/Step, reset/replay, model-loading, ruler toggle/visibility, and stopwatch controls.
@@ -41,14 +41,17 @@
 - [x] Add CI gates for project validation, solver regression tests, typecheck, and production build.
 - [x] Latest GitHub Actions run passed project validation, all five solver/storage tests, TypeScript typecheck, and the Vite production build.
 
-**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser acceptance checks remain open. Mass/restitution controls remain follow-up work because contact dynamics are not implemented.
+**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity and selected-body properties, compare a track collision, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser acceptance checks remain open. The current contact model is constrained to one-dimensional along-track collisions; general 3D contacts and constraints remain with the Havok milestone.
 
 ### 1. Mechanical lab
 - [ ] Add Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
-- [ ] Add object selection/inspection, snapping, undo/redo, save/load, and deterministic reset.
+- [ ] Add snapping, undo/redo, complete deterministic scene reset, and persisted camera/scene state. Object selection/inspection and setup save/load are implemented.
 - [x] Add a calibrated 0–8 m ruler to the workbench with 1 m and 0.25 m graduations and EN/DE toolbar feedback.
 - [x] Add an independently controlled stopwatch with start, pause, and reset; resetting the experiment also resets the stopwatch.
-- [ ] Add a scale and energy readouts.
+- [x] Add versioned `.physicslab` setup save/load for gravity, object types, mass, and restitution with range-checked imports and round-trip tests.
+- [x] Add a reference scale readout (1 kg per body) and live potential, kinetic, and total energy calculations for the ramp lesson; rolling-ball energy includes the solid-sphere rotational term.
+- [x] Add adjustable body mass and restitution, energy-aware readouts, and stable 1D collisions between ball and cube on the lesson track.
+- [ ] Replace/extend the constrained lesson-track contact prototype with Havok-backed general 3D contact dynamics.
 - Add force/velocity X-Ray and lessons for gravity, velocity, acceleration, friction, momentum, collisions, torque, and mechanical advantage.
 
 ### 2. Fluids and water
