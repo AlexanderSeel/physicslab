@@ -14,3 +14,7 @@
 
 .ruler-legend{position:absolute;right:13px;bottom:30px;display:grid;gap:4px;padding:8px 10px;background:#fbfcf0e8;border:1px solid #dfe7d5;border-radius:6px;color:#60766a;font:8px 'DM Mono',monospace;letter-spacing:.35px;pointer-events:none}.ruler-legend b{color:#3f7667;font-size:8px;letter-spacing:.75px}
 .tool-button{cursor:pointer}.tool-button:focus-visible{outline:2px solid #57937b;outline-offset:3px;border-radius:3px}
+
+.stopwatch-readout{display:flex;align-items:center;gap:8px;border-left:1px solid #e3e8e2;padding-left:12px}.stopwatch-value small,.stopwatch-value b{display:block}.stopwatch-value small{color:#9ba7a0;font:8px 'DM Mono',monospace;letter-spacing:.55px}.stopwatch-value b{font:600 13px 'DM Mono',monospace;color:#425a52;margin-top:4px}.stopwatch-value i{font:9px 'DM Sans',sans-serif;color:#96a49d;font-style:normal;margin-left:3px}.stopwatch-controls{display:flex;gap:3px}.stopwatch-controls button{width:23px;height:24px;border:1px solid #e0e6df;background:#fbfcf9;border-radius:4px;color:#70817a;font-size:10px;cursor:pointer}.stopwatch-controls button:hover{border-color:#a9c2b2;color:#3f7667}.stopwatch-controls button:focus-visible{outline:2px solid #57937b;outline-offset:2px}
+@media(max-width:760px){.stopwatch-readout{padding-left:8px}.stopwatch-value small{font-size:7px}}
+@media(max-width:420px){.stopwatch-divider{display:none}.stopwatch-readout{border-left:0;padding-left:0}}
