@@ -19,6 +19,8 @@ Requires Node.js 22 or newer.
 ```sh
 npm install
 npm run dev
+npm run validate
+npm test
 npm run typecheck
 npm run build
 ```
