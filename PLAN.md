@@ -26,6 +26,8 @@
 - [x] Add studio key lighting and soft cast shadows; remove controls without behavior and show the prebuilt ramp as already in the scene.
 - [x] Label X-Ray accurately as a velocity vector, align its direction with the ramp, and synchronize lesson progress to completion.
 - [ ] Browser-review the corrected first experiment against the visual reference and tune its staging, contrast, and asset scale.
+- [ ] Tune the first scene's target behavior so a body rolls past or settles naturally at the target instead of stopping abruptly at its center; keep lesson completion based on a target zone, not a forced velocity stop.
+- [ ] Replace the first scene's 1D track-only collision approximation with solid body contacts so balls and cubes cannot pass through or overlap each other, including when they leave the ramp and reach the tabletop.
 - [x] Add a four-wall lab shell, multi-pane window, textured plaster walls, warm fixture lights, and a spherical outdoor environment texture.
 - [x] Apply the generated oak base-color texture to the workbench and ramp surface.
 - [x] Keep the camera and background inside a roofed room with windows on three sides.
@@ -41,7 +43,7 @@
 - [x] Add CI gates for project validation, solver regression tests, typecheck, and production build.
 - [x] Latest GitHub Actions run passed project validation, all five solver/storage tests, TypeScript typecheck, and the Vite production build.
 
-**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity and selected-body properties, compare a track collision, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser acceptance checks remain open. The current contact model is constrained to one-dimensional along-track collisions; general 3D contacts and constraints remain with the Havok milestone.
+**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity and selected-body properties, compare a track collision, switch the core interface between EN and DE, and complete the objective only by getting a ball into the target zone. Bodies keep moving naturally through the target area, and solid contacts prevent bodies from passing through one another on the ramp and tabletop. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser acceptance checks remain open. The current contact model is constrained to one-dimensional along-track collisions; general 3D contacts and constraints remain with the Havok milestone.
 
 ### 1. Mechanical lab
 - [ ] Add Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
