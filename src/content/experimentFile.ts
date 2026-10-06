@@ -1,5 +1,7 @@
 import type { BodyKind } from "../physics/RampSolver";
 
+const MAX_EXPERIMENT_BODIES = 14;
+
 export interface ExperimentSetup {
   gravity: number;
   bodies: Array<Pick<ExperimentBody, "kind" | "mass" | "restitution">>;
@@ -54,8 +56,8 @@ function validateDocument(input: unknown): asserts input is PhysicsLabDocument {
       || document.gravity < 1 || document.gravity > 25) {
     throw new Error("Gravity must be between 1 and 25 m/s².");
   }
-  if (!Array.isArray(document.bodies) || document.bodies.length > 32) {
-    throw new Error("An experiment can contain at most 32 bodies.");
+  if (!Array.isArray(document.bodies) || document.bodies.length > MAX_EXPERIMENT_BODIES) {
+    throw new Error(`An experiment can contain at most ${MAX_EXPERIMENT_BODIES} bodies.`);
   }
   for (const [index, item] of document.bodies.entries()) {
     if (!item || typeof item !== "object" || Array.isArray(item)) {

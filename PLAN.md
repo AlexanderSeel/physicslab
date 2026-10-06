@@ -48,7 +48,7 @@
 - [ ] Add snapping, undo/redo, complete deterministic scene reset, and persisted camera/scene state. Object selection/inspection and setup save/load are implemented.
 - [x] Add a calibrated 0–8 m ruler to the workbench with 1 m and 0.25 m graduations and EN/DE toolbar feedback.
 - [x] Add an independently controlled stopwatch with start, pause, and reset; resetting the experiment also resets the stopwatch.
-- [x] Add versioned `.physicslab` setup save/load for gravity, object types, mass, and restitution with range-checked imports and round-trip tests.
+- [x] Add versioned `.physicslab` setup save/load for gravity, object types, mass, and restitution with range-checked imports, a sample collision setup, and round-trip tests.
 - [x] Add a reference scale readout (1 kg per body) and live potential, kinetic, and total energy calculations for the ramp lesson; rolling-ball energy includes the solid-sphere rotational term.
 - [x] Add adjustable body mass and restitution, energy-aware readouts, and stable 1D collisions between ball and cube on the lesson track.
 - [ ] Replace/extend the constrained lesson-track contact prototype with Havok-backed general 3D contact dynamics.

@@ -19,6 +19,7 @@ export interface EnergyState {
 }
 
 const RAMP_START_X = -3.2;
+export const MAX_TRACK_BODIES = 14;
 const RAMP_ANGLE = 0.235;
 const RAMP_START_Y = 1.31;
 const BODY_RADIUS = 0.22;
@@ -73,6 +74,9 @@ export class RampSolver {
   }
 
   addBody(kind: BodyKind): BodyState {
+    if (this.bodies.length >= MAX_TRACK_BODIES) {
+      throw new Error(`The workbench supports at most ${MAX_TRACK_BODIES} bodies in this lesson.`);
+    }
     const spacing = this.bodies.length;
     const x = RAMP_START_X + 0.38 + spacing * 0.52;
     const body: BodyState = {

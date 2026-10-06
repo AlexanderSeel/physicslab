@@ -37,7 +37,7 @@ const copy = {
     learnText: motionLesson.locales.en.learn,
     technicalText: motionLesson.locales.en.technical,
     formulaCaption: motionLesson.formula.caption.en, source: motionLesson.source.title.en,
-    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "SIM TIME", stopwatch: "STOPWATCH", stopwatchStart: "Start stopwatch", stopwatchPause: "Pause stopwatch", stopwatchReset: "Reset stopwatch", speed: "SPEED", mass: "MASS / BODY", referenceMass: "TOTAL MASS", energy: "TOTAL ENERGY", restitution: "BOUNCE", selectedBody: "SELECT BODY", noBody: "Add a ball or cube to edit its properties.", removeBody: "REMOVE BODY", saveSetup: "Save setup", loadSetup: "Load setup", loadedSetup: "Experiment loaded. Press Run to start.", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", measureOn: "RULER ON", rulerScale: "1 m major · 0.25 m minor", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: motionLesson.formula.title.en,
+    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "SIM TIME", stopwatch: "STOPWATCH", stopwatchStart: "Start stopwatch", stopwatchPause: "Pause stopwatch", stopwatchReset: "Reset stopwatch", speed: "SPEED", mass: "MASS / BODY", referenceMass: "TOTAL MASS", energy: "TOTAL ENERGY", restitution: "BOUNCE", selectedBody: "SELECT BODY", noBody: "Add a ball or cube to edit its properties.", removeBody: "REMOVE BODY", saveSetup: "Save setup", loadSetup: "Load setup", loadedSetup: "Experiment loaded. Press Run to start.", maxBodies: "The lesson track is full (14 bodies). Remove one to add another.", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", measureOn: "RULER ON", rulerScale: "1 m major · 0.25 m minor", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: motionLesson.formula.title.en,
   },
   de: {
     eyebrow: "PHYSICSLAB / BEWEGUNG 01", title: "Bauen. Beobachten. Verstehen.",
@@ -51,7 +51,7 @@ const copy = {
     learnText: motionLesson.locales.de.learn,
     technicalText: motionLesson.locales.de.technical,
     formulaCaption: motionLesson.formula.caption.de, source: motionLesson.source.title.de,
-    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "SIM-ZEIT", stopwatch: "STOPPUHR", stopwatchStart: "Stoppuhr starten", stopwatchPause: "Stoppuhr anhalten", stopwatchReset: "Stoppuhr zurücksetzen", speed: "TEMPO", mass: "MASSE / KÖRPER", referenceMass: "GESAMTMASSE", energy: "GESAMTENERGIE", restitution: "RÜCKPRALL", selectedBody: "KÖRPER WÄHLEN", noBody: "Füge einen Ball oder Würfel hinzu, um Eigenschaften zu ändern.", removeBody: "KÖRPER ENTFERNEN", saveSetup: "Aufbau speichern", loadSetup: "Aufbau laden", loadedSetup: "Experiment geladen. Mit Start geht es los.", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", measureOn: "LINEAL AN", rulerScale: "1 m groß · 0,25 m klein", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
+    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "SIM-ZEIT", stopwatch: "STOPPUHR", stopwatchStart: "Stoppuhr starten", stopwatchPause: "Stoppuhr anhalten", stopwatchReset: "Stoppuhr zurücksetzen", speed: "TEMPO", mass: "MASSE / KÖRPER", referenceMass: "GESAMTMASSE", energy: "GESAMTENERGIE", restitution: "RÜCKPRALL", selectedBody: "KÖRPER WÄHLEN", noBody: "Füge einen Ball oder Würfel hinzu, um Eigenschaften zu ändern.", removeBody: "KÖRPER ENTFERNEN", saveSetup: "Aufbau speichern", loadSetup: "Aufbau laden", loadedSetup: "Experiment geladen. Mit Start geht es los.", maxBodies: "Die Versuchsrampe ist voll (14 Körper). Entferne einen Körper, um weiterzubauen.", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", measureOn: "LINEAL AN", rulerScale: "1 m groß · 0,25 m klein", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
   },
 } as const;
 
@@ -446,6 +446,10 @@ export default function App() {
   const addBody = useCallback((kind: BodyKind) => {
     const scene = sceneRef.current;
     if (!scene) return;
+    if (solverRef.current.bodies.length >= 14) {
+      setFileMessage(t.maxBodies);
+      return;
+    }
     const state = solverRef.current.addBody(kind);
     setSelectedBodyId(state.id);
     setBodyMass(state.mass);
@@ -471,7 +475,7 @@ export default function App() {
     const modelContainer = modelAssetsRef.current[kind];
     if (modelContainer) attachGlb(visual, modelContainer);
     setBodyCount(solverRef.current.bodies.length);
-  }, [xray]);
+  }, [xray, t.maxBodies]);
 
   const selectBody = (id: number) => {
     const body = solverRef.current.bodies.find(candidate => candidate.id === id);
@@ -621,8 +625,8 @@ export default function App() {
           <div className="separator" />
           <div className="rail-heading"><span className="section-kicker">{t.components}</span></div>
           <div className="category-label">{t.mechanics}</div>
-          <button className="component-row" onClick={() => addBody("ball")}><span className="component-icon ball-icon">●</span><span>{t.ball}</span><span className="add-sign">＋</span></button>
-          <button className="component-row" onClick={() => addBody("cube")}><span className="component-icon cube-icon">◆</span><span>{t.cube}</span><span className="add-sign">＋</span></button>
+          <button className="component-row" disabled={bodyCount >= 14} onClick={() => addBody("ball")}><span className="component-icon ball-icon">●</span><span>{t.ball}</span><span className="add-sign">＋</span></button>
+          <button className="component-row" disabled={bodyCount >= 14} onClick={() => addBody("cube")}><span className="component-icon cube-icon">◆</span><span>{t.cube}</span><span className="add-sign">＋</span></button>
           <div className="component-row component-row-static"><span className="component-icon ramp-icon">▱</span><span>{t.ramp}</span><span className="in-scene-badge">{locale === "en" ? "IN SCENE" : "IM AUFBAU"}</span></div>
           <div className="rail-bottom"><div className="avatar small-avatar">✦</div><div><b>PhysicsLab</b><span>Learning through play</span></div> </div>
         </aside>
