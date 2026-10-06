@@ -34,13 +34,13 @@ Update the Blender path to match the version installed on your PC:
 
 ```powershell
 $blender = "C:\Program Files\Blender Foundation\Blender 5.3\blender.exe"
-& $blender --background --python tools/blender/generate_assets.py --
+& $blender --background --python tools/blender/generate_assets.py
 ```
 
 ### macOS / Linux
 
 ```bash
-blender --background --python tools/blender/generate_assets.py --
+blender --background --python tools/blender/generate_assets.py
 ```
 
 The command exits after writing the files. Blender's background mode is intentional: the generator creates the geometry and exports it without needing UI automation.
