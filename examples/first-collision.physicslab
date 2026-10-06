@@ -1,0 +1,17 @@
+{
+  "format": "physicslab",
+  "version": 1,
+  "gravity": 9.81,
+  "bodies": [
+    {
+      "kind": "cube",
+      "mass": 2,
+      "restitution": 0.55
+    },
+    {
+      "kind": "ball",
+      "mass": 1,
+      "restitution": 0.55
+    }
+  ]
+}

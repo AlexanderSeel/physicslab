@@ -34,7 +34,14 @@ test("import rejects invalid values and unsupported schema versions", () => {
 });
 
 test("import limits setup size and validates each body", () => {
-  const oversized = Array.from({ length: 33 }, () => ({ kind: "ball", mass: 1, restitution: 0.3 }));
-  assert.throws(() => parsePhysicsLabDocument(JSON.stringify({ format: "physicslab", version: 1, gravity: 9.81, bodies: oversized })), /at most 32/);
+  const oversized = Array.from({ length: 15 }, () => ({ kind: "ball", mass: 1, restitution: 0.3 }));
+  assert.throws(() => parsePhysicsLabDocument(JSON.stringify({ format: "physicslab", version: 1, gravity: 9.81, bodies: oversized })), /at most 14/);
   assert.throws(() => parsePhysicsLabDocument(JSON.stringify({ format: "physicslab", version: 1, gravity: 9.81, bodies: [{ kind: "spring", mass: 1, restitution: 0.3 }] })), /unsupported type/);
+});
+
+test("the included collision experiment is a valid importable setup", async () => {
+  const sample = await readFile(new URL("../examples/first-collision.physicslab", import.meta.url), "utf8");
+  const parsed = parsePhysicsLabDocument(sample);
+  assert.deepEqual(parsed.bodies.map(body => body.kind), ["cube", "ball"]);
+  assert.equal(parsed.gravity, 9.81);
 });
