@@ -67,7 +67,7 @@ function attachGlb(visual: VisualBody, container: AssetContainer): void {
   for (const node of instances.rootNodes) {
     node.parent = visual.root;
     // Blender models use a grounded origin; the solver positions each body by its center.
-    node.position.y -= groundOriginOffset;
+    (node as TransformNode).position.y -= groundOriginOffset;
   }
   visual.fallbackMesh.dispose(false, true);
   visual.fallbackMesh = undefined;
