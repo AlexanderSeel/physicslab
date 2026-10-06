@@ -26,6 +26,10 @@ export class RampSolver {
   private nextId = 1;
   readonly bodies: BodyState[] = [];
 
+  hasReachedTarget(kind: BodyKind): boolean {
+    return this.bodies.some(body => body.kind === kind && body.finished);
+  }
+
   reset(): void {
     this.elapsed = 0;
     this.nextId = 1;
