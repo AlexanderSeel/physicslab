@@ -97,7 +97,7 @@ export default function App() {
     const railMat = mat("rail", "#f09b62", 0.18, 0.38);
     const targetMat = mat("target", "#57a983", 0.1, 0.45);
     const floor = MeshBuilder.CreateBox("workbench", { width: 12.5, height: 0.3, depth: 5.6 }, scene);
-    floor.position.set(0, -0.25, 0);
+    floor.position.set(0, -0.01, 0);
     floor.material = benchMat;
     const ramp = MeshBuilder.CreateBox("ramp", { width: 5.2, height: 0.16, depth: 1.5 }, scene);
     ramp.position.set(-0.62, 0.63, 0);
@@ -109,20 +109,20 @@ export default function App() {
       rail.rotation.z = -0.235;
       rail.material = railMat;
     }
-    for (const [x, height] of [[-2.55, 0.78], [1.28, 0.31]]) {
+    for (const [x, height] of [[-2.55, 1.1], [1.28, 0.12]]) {
       const support = MeshBuilder.CreateBox("support", { width: 0.2, height, depth: 1.2 }, scene);
-      support.position.set(x, -0.1 + height / 2, 0);
+      support.position.set(x, 0.14 + height / 2, 0);
       support.material = mat("aluminum-support", "#9ba9a7", 0.62, 0.35);
     }
     const target = MeshBuilder.CreateTorus("target", { diameter: 1.06, thickness: 0.09, tessellation: 48 }, scene);
-    target.position.set(4.55, 0.02, 0);
+    target.position.set(4.55, 0.59, 0);
     target.rotation.x = Math.PI / 2;
     target.material = targetMat;
     const grid = MeshBuilder.CreateGround("grid", { width: 20, height: 12, subdivisions: 1 }, scene);
     grid.position.y = -0.43;
     grid.material = mat("floor-matte", "#dfe5df", 0, 0.9);
     const shadow = MeshBuilder.CreateDisc("target-shadow", { radius: 0.56, tessellation: 36 }, scene);
-    shadow.position.set(4.55, -0.075, 0);
+    shadow.position.set(4.55, 0.142, 0);
     shadow.rotation.x = Math.PI / 2;
     shadow.material = new StandardMaterial("target-shadow-mat", scene);
     (shadow.material as StandardMaterial).diffuseColor = Color3.FromHexString("#acd2bc");
