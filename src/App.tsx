@@ -107,7 +107,9 @@ export default function App() {
   const [time, setTime] = useState(0);
   const [bodyCount, setBodyCount] = useState(0);
   const [gravity, setGravity] = useState(9.81);
-  const [xray, setXray] = useState(false);\n  const [measureVisible, setMeasureVisible] = useState(false);\n  const measureRigRef = useRef<TransformNode | null>(null);
+  const [xray, setXray] = useState(false);
+  const [measureVisible, setMeasureVisible] = useState(false);
+  const measureRigRef = useRef<TransformNode | null>(null);
   const [targetReached, setTargetReached] = useState(false);
   const [lessonCompleted, setLessonCompleted] = useState(isMotionLessonComplete);
   const lessonCompletedRef = useRef(lessonCompleted);
