@@ -263,6 +263,7 @@ export default function App() {
       sceneDisposed = true;
       measureRigRef.current?.dispose(false, true);
       measureRigRef.current = null;
+      shadowGenerator.dispose();
       visualsRef.current.forEach(disposeVisual);
       for (const container of Object.values(modelAssetsRef.current)) container?.dispose();
       modelAssetsRef.current = {};
