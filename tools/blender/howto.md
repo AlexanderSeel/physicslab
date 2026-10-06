@@ -47,7 +47,7 @@ The command exits after writing the files. Blender's background mode is intentio
 
 ## Surface textures and visual direction
 
-The generator embeds packed PBR maps in each GLB. To art-direct a material with an image-generated texture, add tileable maps under `tools/blender/textures/` using names such as `wood_basecolor.png`, `wood_roughness.png`, and `wood_normal.png`. Supported styles are `wood`, `rubber`, `metal`, and `paint`. Base-color maps should be evenly lit and free of shadows/highlights; roughness maps should be grayscale; normal maps must be tangent-space normal maps. Any missing map falls back to the deterministic generated map. Keep source textures with the Blender generator and regenerate only the affected model using `--only <asset-id>`.
+The generator embeds packed PBR maps in each GLB. To art-direct a material with an image-generated texture, add tileable maps under `tools/blender/textures/` using names such as `wood_basecolor.jpg` or `wood_basecolor.png`, `wood_roughness.png`, and `wood_normal.png`. The checked-in `wood_basecolor.jpg` and `rubber_basecolor.jpg` are generated albedo sources; the Blender script accepts JPEG or PNG for base color, while roughness and tangent-space normal maps should be PNG. Supported styles are `wood`, `rubber`, `metal`, and `paint`. Base-color maps should be evenly lit and free of shadows/highlights; roughness maps should be grayscale; normal maps must be tangent-space normal maps. Any missing map falls back to the deterministic generated map. Keep source textures with the Blender generator and regenerate only the affected model using `--only <asset-id>`.
 
 The generated lab screenshot and asset contact sheet are visual direction only. Treat the Blender-authored mesh and its collider/socket metadata as the authoritative objects. Review any regenerated GLB in a glTF viewer and in the browser before marking its appearance done.
 
@@ -67,7 +67,7 @@ Skip the editable `.blend` files when you only need to refresh GLB output:
 
 Unknown asset IDs stop the run with an error. Subset runs merge their entries into the existing asset manifest.
 
-## Output paths
+## Lab environment\n\nThe app includes a four-wall laboratory shell, a framed panoramic window, warm fixture lights, and a 360-degree outdoor environment dome at `public/assets/textures/lab_environment.jpg`. It is a spherical sky environment mapped in 3D around the scene, visible through the glazing. AI-generated wood and rubber base-color maps are stored under `tools/blender/textures/`; per-material roughness and normal maps are still generated procedurally and packed into each exported GLB.\n\n## Output paths
 
 | Output | Purpose |
 | --- | --- |
@@ -87,7 +87,7 @@ Keep the `.blend` files as the editable source of truth. The application should 
 
 The generator currently produces the library and manifest; the current ramp lesson still uses its code-built workbench meshes. Wiring the manifest and GLBs into the runtime catalogue is the next asset integration step.
 
-If a run stops partway through, fix the reported builder issue and rerun the full command. Existing files are overwritten, so completed assets are safely regenerated before Blender continues through the remaining list. To generate only the failed model, use `-- --only <asset-id>` (for example, `-- --only bucket`), then rerun the full command to finish the library. Run PowerShell commands as separate lines and invoke the executable with `&`; `--root` must be followed by a repository path when you use it, such as `-- --root "D:\\dev\\my\\physicslab"`.
+If a run stops partway through, fix the reported builder issue and rerun the full command. Each selected run writes directly to the same output filenames and overwrites existing `.glb` and (unless `--no-blend` is set) `.blend` files. A full run replaces every generated model; `--only` replaces only the named model files and merges those entries into the manifest. Keep a backup or use version control before making a large visual change. To generate only the failed model, use `-- --only <asset-id>` (for example, `-- --only bucket`), then rerun the full command to finish the library. Run PowerShell commands as separate lines and invoke the executable with `&`; `--root` must be followed by a repository path when you use it, such as `-- --root "D:\\dev\\my\\physicslab"`.
 
 ## Editing and regenerating
 

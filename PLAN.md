@@ -25,7 +25,7 @@
 - [x] Align the ramp exit with tabletop height, move the target onto the tabletop, and add a no-hop regression test.
 - [x] Add studio key lighting and soft cast shadows; remove controls without behavior and show the prebuilt ramp as already in the scene.
 - [x] Label X-Ray accurately as a velocity vector, align its direction with the ramp, and synchronize lesson progress to completion.
-- [ ] Browser-review the corrected first experiment against the visual reference and tune its staging, contrast, and asset scale.
+- [ ] Browser-review the corrected first experiment against the visual reference and tune its staging, contrast, and asset scale.\n- [x] Add a four-wall lab shell, multi-pane window, warm fixture lights, and spherical outdoor environment texture.
 - [x] Add ball/cube components from the palette; load the committed ball/cube GLBs as runtime visuals with procedural fallback meshes; keep the ramp prebuilt in the first scene.
 - [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
 - [x] Implement first-lesson completion tracking: only a finished ball satisfies the target, completion persists locally across reset/replay, and storage errors fall back to session-only completion.
