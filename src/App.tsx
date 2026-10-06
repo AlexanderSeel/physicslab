@@ -25,6 +25,9 @@ const copy = {
     play: "Run", pause: "Pause", step: "Step", reset: "Reset", gravity: "Gravity", xray: "Force X-Ray",
     ready: "READY TO EXPERIMENT", running: "SIMULATION RUNNING", paused: "SIMULATION PAUSED", success: "TARGET REACHED",
     fact: "PHYSICS NOTE", factTitle: "Gravity along a slope", factText: "A ramp redirects part of gravity along its surface. A steeper ramp gives the ball more acceleration down the slope.",
+    learnText: "A solid sphere rolling without slipping uses gravity both to move forward and to rotate. That makes its acceleration lower than a frictionless sliding block.",
+    technicalText: "For a solid sphere, I = 2/5 mR² and a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), assuming ideal rolling without slipping.",
+    formulaCaption: "Solid sphere · rolling without slipping", source: "OpenStax · University Physics Vol. 1",,
     simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "TIME", speed: "SPEED", target: "TARGET",
   },
   de: {
@@ -36,6 +39,9 @@ const copy = {
     play: "Start", pause: "Pause", step: "Schritt", reset: "Zurücksetzen", gravity: "Gravitation", xray: "Kraft-Röntgen",
     ready: "BEREIT ZUM EXPERIMENTIEREN", running: "SIMULATION LÄUFT", paused: "SIMULATION PAUSIERT", success: "ZIEL ERREICHT",
     fact: "PHYSIK-NOTIZ", factTitle: "Schwerkraft an einer Schräge", factText: "Eine Rampe lenkt einen Teil der Schwerkraft entlang ihrer Oberfläche. Je steiler die Rampe, desto stärker beschleunigt der Ball nach unten.",
+    learnText: "Eine rollende Vollkugel nutzt die Schwerkraft sowohl für die Vorwärtsbewegung als auch für die Drehung. Deshalb ist ihre Beschleunigung kleiner als die eines reibungsfrei gleitenden Körpers.",
+    technicalText: "Für eine Vollkugel gilt I = 2/5 mR² und a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), bei idealem Rollen ohne Gleiten.",
+    formulaCaption: "Vollkugel · Rollen ohne Gleiten", source: "OpenStax · University Physics Bd. 1",,
     simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL",
   },
 } as const;
@@ -57,8 +63,9 @@ export default function App() {
   const [bodyCount, setBodyCount] = useState(0);
   const [gravity, setGravity] = useState(9.81);
   const [xray, setXray] = useState(false);
-  const [ready, setReady] = useState(false);
-  const [targetReached, setTargetReached] = useState(false);\n  const [depth, setDepth] = useState<"simple" | "learn" | "technical">("simple");
+  const [targetReached, setTargetReached] = useState(false);
+  const [depth, setDepth] = useState<"simple" | "learn" | "technical">("simple");
+  const xrayRef = useRef(false);
   const t = copy[locale];
 
   useEffect(() => {
@@ -163,7 +170,7 @@ export default function App() {
     mesh.position.set(state.x, state.y, 0);
     if (state.kind === "ball") mesh.rotation.z = state.rotation;
     else mesh.rotation.z = state.rotation * 0.35;
-    if (xray) {
+    if (xrayRef.current) {
       const arrow = mesh.metadata?.arrow as Mesh | undefined;
       if (arrow) {
         arrow.setEnabled(state.speed > 0.04);
@@ -232,6 +239,7 @@ export default function App() {
   }, [gravity]);
 
   useEffect(() => {
+    xrayRef.current = xray;
     for (const visual of visualsRef.current) syncBody(visual);
   }, [xray]);
 
