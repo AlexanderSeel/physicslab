@@ -3,12 +3,14 @@ import {
   ArcRotateCamera,
   Color3,
   Color4,
+  DirectionalLight,
   Engine,
   HemisphericLight,
   Mesh,
   MeshBuilder,
   PBRMaterial,
   Scene,
+  ShadowGenerator,
   StandardMaterial,
   Vector3,
 } from "@babylonjs/core";
@@ -133,7 +135,7 @@ export default function App() {
     if (!canvas) return;
     const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, antialias: true });
     const scene = new Scene(engine);
-    scene.clearColor = new Color4(0.87, 0.91, 0.9, 1);
+    scene.clearColor = new Color4(0.91, 0.92, 0.89, 1);
     sceneRef.current = scene;
     engineRef.current = engine;
 
@@ -143,7 +145,13 @@ export default function App() {
     camera.wheelPrecision = 45;
     camera.panningSensibility = 0;
     camera.attachControl(canvas, true);
-    new HemisphericLight("softbox", new Vector3(-0.4, 1, -0.25), scene).intensity = 0.9;
+    new HemisphericLight("softbox", new Vector3(-0.4, 1, -0.25), scene).intensity = 0.78;
+    const keyLight = new DirectionalLight("studio-key", new Vector3(-0.4, -1, 0.55), scene);
+    keyLight.position = new Vector3(-4.5, 8, -5.5);
+    keyLight.intensity = 1.35;
+    const shadowGenerator = new ShadowGenerator(1024, keyLight);
+    shadowGenerator.useBlurExponentialShadowMap = true;
+    shadowGenerator.blurKernel = 20;
     measureRigRef.current = createRulerRig(scene);
 
     const mat = (name: string, color: string, metallic = 0.1, roughness = 0.6) => {
@@ -153,35 +161,44 @@ export default function App() {
       material.roughness = roughness;
       return material;
     };
-    const benchMat = mat("bench", "#d9dfda", 0.08, 0.8);
+    const benchMat = mat("bench", "#c4a47c", 0.02, 0.68);
     const rampMat = mat("ramp", "#e5783d", 0.18, 0.38);
     const railMat = mat("rail", "#f09b62", 0.18, 0.38);
     const targetMat = mat("target", "#57a983", 0.1, 0.45);
     const floor = MeshBuilder.CreateBox("workbench", { width: 12.5, height: 0.3, depth: 5.6 }, scene);
     floor.position.set(0, -0.01, 0);
     floor.material = benchMat;
-    const ramp = MeshBuilder.CreateBox("ramp", { width: 5.2, height: 0.16, depth: 1.5 }, scene);
-    ramp.position.set(-0.62, 0.63, 0);
+    floor.receiveShadows = true;
+    const ramp = MeshBuilder.CreateBox("ramp", { width: 5.05, height: 0.16, depth: 1.5 }, scene);
+    ramp.position.set(-0.75, 0.65, 0);
     ramp.rotation.z = -0.235;
     ramp.material = rampMat;
+    ramp.receiveShadows = true;
+    shadowGenerator.addShadowCaster(ramp);
     for (const z of [-0.78, 0.78]) {
-      const rail = MeshBuilder.CreateBox("ramp-rail", { width: 5.2, height: 0.12, depth: 0.09 }, scene);
-      rail.position.set(-0.62, 0.79, z);
+      const rail = MeshBuilder.CreateBox("ramp-rail", { width: 5.05, height: 0.12, depth: 0.09 }, scene);
+      rail.position.set(-0.75, 0.81, z);
       rail.rotation.z = -0.235;
       rail.material = railMat;
+      rail.receiveShadows = true;
+      shadowGenerator.addShadowCaster(rail);
     }
     for (const [x, height] of [[-2.55, 1.1], [1.28, 0.12]]) {
       const support = MeshBuilder.CreateBox("support", { width: 0.2, height, depth: 1.2 }, scene);
       support.position.set(x, 0.14 + height / 2, 0);
       support.material = mat("aluminum-support", "#9ba9a7", 0.62, 0.35);
+      support.receiveShadows = true;
+      shadowGenerator.addShadowCaster(support);
     }
     const target = MeshBuilder.CreateTorus("target", { diameter: 1.06, thickness: 0.09, tessellation: 48 }, scene);
-    target.position.set(4.55, 0.59, 0);
+    target.position.set(4.55, 0.152, 0);
     target.rotation.x = Math.PI / 2;
     target.material = targetMat;
+    target.receiveShadows = true;
     const grid = MeshBuilder.CreateGround("grid", { width: 20, height: 12, subdivisions: 1 }, scene);
     grid.position.y = -0.43;
-    grid.material = mat("floor-matte", "#dfe5df", 0, 0.9);
+    grid.material = mat("floor-matte", "#e2dfd7", 0, 0.9);
+    grid.receiveShadows = true;
     const shadow = MeshBuilder.CreateDisc("target-shadow", { radius: 0.56, tessellation: 36 }, scene);
     shadow.position.set(4.55, 0.142, 0);
     shadow.rotation.x = Math.PI / 2;
@@ -358,11 +375,11 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="#" aria-label="PhysicsLab home"><span className="brand-mark">P</span><span>physics<span className="brand-light">lab</span></span></a>
-        <nav className="main-nav" aria-label="Main navigation"><button className="nav-active">{t.academy}</button><button>{t.freeLab}</button><button>{t.missions}</button></nav>
-        <div className="top-actions"><span className="status-pill"><i />{t.eyebrow.split(" / ")[1]}</span><button className="locale" onClick={() => setLocale(locale === "en" ? "de" : "en")}>{locale.toUpperCase()} <span>⌄</span></button><button className="avatar">A</button></div>
+        <nav className="main-nav" aria-label="Main navigation"><span className="nav-active" aria-current="page">{t.academy}</span></nav>
+        <div className="top-actions"><span className="status-pill"><i />{t.eyebrow.split(" / ")[1]}</span><button className="locale" onClick={() => setLocale(locale === "en" ? "de" : "en")}>{locale.toUpperCase()} <span>⌄</span></button> </div>
       </header>
 
-      <section className="page-heading"><div><div className="eyebrow">{t.eyebrow}</div><h1>{t.title}</h1><p>{t.subtitle}</p></div><button className="journey-button"><span className="journey-dot">01</span><span><small>{t.journeyLabel}</small><b>{t.explorer}</b></span><span className="chevron">⌄</span></button></section>
+      <section className="page-heading"><div><div className="eyebrow">{t.eyebrow}</div><h1>{t.title}</h1><p>{t.subtitle}</p></div><div className="journey-button"><span className="journey-dot">01</span><span><small>{t.journeyLabel}</small><b>{t.explorer}</b></span><span className="chevron">01 / 08</span></div></section>
 
       <div className="workspace">
         <aside className="left-rail">
@@ -370,16 +387,16 @@ export default function App() {
           <h2>{t.lessonTitle}</h2><p className="lesson-copy">{t.lessonBody}</p>
           <div className="progress-track"><span /></div><div className="progress-caption"><span>{t.motion}</span><span>{lessonCompleted ? t.lessonCompleted : t.lessonProgress}</span></div>
           <div className="separator" />
-          <div className="rail-heading"><span className="section-kicker">{t.components}</span><button className="text-button">＋</button></div>
+          <div className="rail-heading"><span className="section-kicker">{t.components}</span></div>
           <div className="category-label">{t.mechanics}</div>
           <button className="component-row" onClick={() => addBody("ball")}><span className="component-icon ball-icon">●</span><span>{t.ball}</span><span className="add-sign">＋</span></button>
           <button className="component-row" onClick={() => addBody("cube")}><span className="component-icon cube-icon">◆</span><span>{t.cube}</span><span className="add-sign">＋</span></button>
-          <button className="component-row" onClick={reset}><span className="component-icon ramp-icon">▱</span><span>{t.ramp}</span><span className="add-sign">↺</span></button>
-          <div className="rail-bottom"><div className="avatar small-avatar">✦</div><div><b>PhysicsLab</b><span>Learning through play</span></div><button className="more">···</button></div>
+          <div className="component-row component-row-static"><span className="component-icon ramp-icon">▱</span><span>{t.ramp}</span><span className="in-scene-badge">{locale === "en" ? "IN SCENE" : "IM AUFBAU"}</span></div>
+          <div className="rail-bottom"><div className="avatar small-avatar">✦</div><div><b>PhysicsLab</b><span>Learning through play</span></div> </div>
         </aside>
 
         <section className="lab-column">
-          <div className="lab-toolbar"><div className="lab-title"><span className="live-dot" /> <b>{t.workbench}</b><span className="toolbar-divider">/</span><span>{t.rampMotion}</span></div><div className="toolbar-tools"><button className={xray ? "tool-button selected" : "tool-button"} onClick={() => setXray(!xray)}><span>◉</span> {t.xray}</button><button className={measureVisible ? "tool-button selected" : "tool-button"} aria-pressed={measureVisible} onClick={() => setMeasureVisible(value => !value)}><span>⌗</span> {t.measure}</button><button className="tool-button icon-only" aria-label="More options">···</button></div></div>
+          <div className="lab-toolbar"><div className="lab-title"><span className="live-dot" /> <b>{t.workbench}</b><span className="toolbar-divider">/</span><span>{t.rampMotion}</span></div><div className="toolbar-tools"><button className={xray ? "tool-button selected" : "tool-button"} onClick={() => setXray(!xray)}><span>◉</span> {t.xray}</button><button className={measureVisible ? "tool-button selected" : "tool-button"} aria-pressed={measureVisible} onClick={() => setMeasureVisible(value => !value)}><span>⌗</span> {t.measure}</button> </div></div>
           <div className="scene-frame"><canvas ref={canvasRef} aria-label="Interactive 3D physics workbench" /><div className="scene-badge"><span className={playing ? "badge-dot active" : "badge-dot"} />{targetReached ? t.success : playing ? t.running : time > 0 ? t.paused : t.ready}</div>{measureVisible && <div className="ruler-legend" role="status"><b>{t.measureOn}</b><span>{t.rulerScale}</span></div>}<div className="scene-hint">{t.orbitHint} <span>·</span> {t.zoomHint}</div><div className="target-label">{t.target}<span>04</span></div>
             {xray && <div className="xray-legend"><b>{t.xray.toUpperCase()}</b><span><i className="gravity-line" /> Gravity · {gravity.toFixed(1)} m/s²</span><span><i className="motion-line" /> Velocity</span></div>}
           </div>
@@ -389,7 +406,7 @@ export default function App() {
           </div>
         </section>
 
-        <aside className="right-rail"><div className="inspector-head"><span className="section-kicker">{t.labNotes}</span><button className="more">···</button></div><div className="note-icon">✳</div><div className="note-label">{t.fact}</div><h3>{t.factTitle}</h3><p className="fact-copy">{depth === "simple" ? t.factText : depth === "learn" ? t.learnText : t.technicalText}</p><div className="depth-tabs"><button className={depth === "simple" ? "active" : ""} onClick={() => setDepth("simple")}>{t.simple}</button><button className={depth === "learn" ? "active" : ""} onClick={() => setDepth("learn")}>{t.learn}</button><button className={depth === "technical" ? "active" : ""} onClick={() => setDepth("technical")}>{t.technical}</button></div><div className="formula-card"><div className="formula-title">{t.rollingTitle}</div><div className="formula">{motionLesson.formula.expression}</div><div className="formula-caption">{t.formulaCaption}</div></div><div className="source-note"><span className="source-check">↗</span><span><b>{t.factSourceLabel}</b><small>{t.source}</small></span><a className="source-link" href={motionLesson.source.url} target="_blank" rel="noreferrer" aria-label="Open source">↗</a></div><div className="inspector-separator" /><div className="quick-stats"><div><span>{t.objects}</span><b>{bodyCount.toString().padStart(2, "0")}</b></div><div><span>{t.gravityLabel}</span><b>{gravity.toFixed(1)}<small> m/s²</small></b></div><div><span>{t.rampAngle}</span><b>13.5<small>°</small></b></div></div><div className="tip-card"><span>✦</span><p><b>{t.tryThis}</b><br />{locale === "en" ? "What changes when you increase gravity?" : "Was ändert sich, wenn du die Gravitation erhöhst?"}</p><button>→</button></div></aside>
+        <aside className="right-rail"><div className="inspector-head"><span className="section-kicker">{t.labNotes}</span></div><div className="note-icon">✳</div><div className="note-label">{t.fact}</div><h3>{t.factTitle}</h3><p className="fact-copy">{depth === "simple" ? t.factText : depth === "learn" ? t.learnText : t.technicalText}</p><div className="depth-tabs"><button className={depth === "simple" ? "active" : ""} onClick={() => setDepth("simple")}>{t.simple}</button><button className={depth === "learn" ? "active" : ""} onClick={() => setDepth("learn")}>{t.learn}</button><button className={depth === "technical" ? "active" : ""} onClick={() => setDepth("technical")}>{t.technical}</button></div><div className="formula-card"><div className="formula-title">{t.rollingTitle}</div><div className="formula">{motionLesson.formula.expression}</div><div className="formula-caption">{t.formulaCaption}</div></div><div className="source-note"><span className="source-check">↗</span><span><b>{t.factSourceLabel}</b><small>{t.source}</small></span><a className="source-link" href={motionLesson.source.url} target="_blank" rel="noreferrer" aria-label="Open source">↗</a></div><div className="inspector-separator" /><div className="quick-stats"><div><span>{t.objects}</span><b>{bodyCount.toString().padStart(2, "0")}</b></div><div><span>{t.gravityLabel}</span><b>{gravity.toFixed(1)}<small> m/s²</small></b></div><div><span>{t.rampAngle}</span><b>13.5<small>°</small></b></div></div><div className="tip-card"><span>✦</span><p><b>{t.tryThis}</b><br />{locale === "en" ? "What changes when you increase gravity?" : "Was ändert sich, wenn du die Gravitation erhöhst?"}</p></div></aside>
       </div>
       <footer className="footer"><span>PHYSICSLAB <i>·</i> LEARN BY EXPERIMENTING</span><span>SIMULATION 01 <i>·</i> {bodyCount} OBJECTS</span></footer>
     </main>
