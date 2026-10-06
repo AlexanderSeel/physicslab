@@ -11,3 +11,6 @@
 @media(max-width:420px){.main-nav button:nth-child(2){display:none}.toolbar-tools .tool-button:nth-child(2){display:none}.scene-frame{min-height:280px}.gravity-ends span:first-child{display:none}}
 
 .source-link{margin-left:auto;color:#7a9a85;text-decoration:none;font-size:11px}.source-link:hover{color:#3f7667}
+
+.ruler-legend{position:absolute;right:13px;bottom:30px;display:grid;gap:4px;padding:8px 10px;background:#fbfcf0e8;border:1px solid #dfe7d5;border-radius:6px;color:#60766a;font:8px 'DM Mono',monospace;letter-spacing:.35px;pointer-events:none}.ruler-legend b{color:#3f7667;font-size:8px;letter-spacing:.75px}
+.tool-button{cursor:pointer}.tool-button:focus-visible{outline:2px solid #57937b;outline-offset:3px;border-radius:3px}
