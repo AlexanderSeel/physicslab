@@ -63,6 +63,9 @@ test("ramp meets the table without an upward hop", () => {
   for (let i = 0; i < 600 && !crossedRampLip; i += 1) {
     simulation.step();
     assert.ok(ball.y <= previousY + 1e-9, "the body must not jump upward at the ramp-to-table transition");
+    if (ball.x >= 1.72) {
+      assert.ok(Math.abs(ball.y - previousY) < 0.03, "the body should meet the tabletop without a visible vertical snap");
+    }
     previousY = ball.y;
     crossedRampLip = ball.x >= 1.72;
   }

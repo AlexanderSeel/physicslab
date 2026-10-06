@@ -27,7 +27,9 @@
 - [x] Label X-Ray accurately as a velocity vector, align its direction with the ramp, and synchronize lesson progress to completion.
 - [ ] Browser-review the corrected first experiment against the visual reference and tune its staging, contrast, and asset scale.
 - [x] Add a four-wall lab shell, multi-pane window, textured plaster walls, warm fixture lights, and a spherical outdoor environment texture.
-- [x] Apply the generated oak base-color texture to the workbench.
+- [x] Apply the generated oak base-color texture to the workbench and ramp surface.
+- [x] Keep the camera and background inside a roofed room with windows on three sides.
+- [x] Align Blender grounded-origin GLBs to the solver’s center-origin bodies.
 - [x] Add ball/cube components from the palette; load the committed ball/cube GLBs as runtime visuals with procedural fallback meshes; keep the ramp prebuilt in the first scene.
 - [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
 - [x] Implement first-lesson completion tracking: only a finished ball satisfies the target, completion persists locally across reset/replay, and storage errors fall back to session-only completion.

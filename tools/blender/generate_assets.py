@@ -362,11 +362,11 @@ def build_weight(root):
 
 
 def build_ramp(root):
-    base = box(root, "Ramp_Surface", (-0.0, 0, 0), (5.2, 1.5, 0.16), "orange", 0.045)
+    base = box(root, "Ramp_Surface", (-0.0, 0, 0), (5.2, 1.5, 0.16), "wood", 0.045)
     base.rotation_euler[1] = 0.235
     bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
     for y in (-0.78, 0.78):
-        rail = box(root, "Ramp_Rail", (0, y, 0.15), (5.2, 0.09, 0.18), "orange_light", 0.025)
+        rail = box(root, "Ramp_Rail", (0, y, 0.15), (5.2, 0.09, 0.18), "wood", 0.025)
         rail.rotation_euler[1] = 0.235
         bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
     socket(root, "CONTACT_START", (-2.5, 0, 0.61), "CONTACT")

@@ -63,7 +63,12 @@ function attachGlb(visual: VisualBody, container: AssetContainer): void {
     true,
   );
   if (instances.rootNodes.length === 0) return;
-  for (const node of instances.rootNodes) node.parent = visual.root;
+  const groundOriginOffset = visual.state.kind === "ball" ? bodyRadius : bodyRadius * 0.875;
+  for (const node of instances.rootNodes) {
+    node.parent = visual.root;
+    // Blender models use a grounded origin; the solver positions each body by its center.
+    node.position.y -= groundOriginOffset;
+  }
   visual.fallbackMesh.dispose(false, true);
   visual.fallbackMesh = undefined;
 }
@@ -141,9 +146,11 @@ export default function App() {
     sceneRef.current = scene;
     engineRef.current = engine;
 
-    const camera = new ArcRotateCamera("camera", -Math.PI / 2.28, 1.04, 12, new Vector3(0.15, 1.1, 0), scene);
+    const camera = new ArcRotateCamera("camera", -Math.PI / 2.28, 1.18, 12, new Vector3(0.15, 1.1, 0), scene);
     camera.lowerRadiusLimit = 8;
-    camera.upperRadiusLimit = 18;
+    camera.upperRadiusLimit = 12.4;
+    camera.lowerBetaLimit = 1.13;
+    camera.upperBetaLimit = 1.43;
     camera.wheelPrecision = 45;
     camera.panningSensibility = 0;
     camera.attachControl(canvas, true);
@@ -205,13 +212,36 @@ export default function App() {
       return piece;
     };
     // Four enclosing walls. The back wall is split around a broad multi-pane window.
-    wall("lab-wall-left", 0.28, roomHeight, 23.5, -13, roomFloorY + roomHeight / 2, -2.75);
-    wall("lab-wall-right", 0.28, roomHeight, 23.5, 13, roomFloorY + roomHeight / 2, -2.75);
-    wall("lab-wall-front", 26, roomHeight, 0.28, 0, roomFloorY + roomHeight / 2, -14.5);
+    const roomFrontZ = -14.5;
+    const sideWindowStart = -1;
+    const sideWindowEnd = 5;
+    const sideWindowCenter = (sideWindowStart + sideWindowEnd) / 2;
+    const roomBackZ = 13.6;
+    for (const x of [-13, 13]) {
+      const insideX = x - Math.sign(x) * 0.17;
+      const frontDepth = sideWindowStart - roomFrontZ;
+      const backDepth = roomBackZ - sideWindowEnd;
+      wall("lab-side-wall-front", 0.28, roomHeight, frontDepth, x, roomFloorY + roomHeight / 2, (roomFrontZ + sideWindowStart) / 2);
+      wall("lab-side-wall-back", 0.28, roomHeight, backDepth, x, roomFloorY + roomHeight / 2, (roomBackZ + sideWindowEnd) / 2);
+      wall("lab-side-wall-sill", 0.28, 1.25 - roomFloorY, sideWindowEnd - sideWindowStart, x, roomFloorY + (1.25 - roomFloorY) / 2, sideWindowCenter);
+      wall("lab-side-wall-header", 0.28, roomTop - 5.15, sideWindowEnd - sideWindowStart, x, 5.15 + (roomTop - 5.15) / 2, sideWindowCenter);
+      const sideGlass = MeshBuilder.CreateBox("side-lab-window", { width: 0.06, height: 3.82, depth: 5.82 }, scene);
+      sideGlass.position.set(insideX, 3.2, sideWindowCenter);
+      sideGlass.material = glassMat;
+      sideGlass.isPickable = false;
+      for (const z of [sideWindowStart, sideWindowCenter, sideWindowEnd]) {
+        wall("side-window-vertical-frame", 0.11, 3.98, 0.075, insideX, 3.2, z, trimMat);
+      }
+      for (const y of [1.25, 3.2, 5.15]) {
+        wall("side-window-horizontal-frame", 0.11, 0.075, 6.16, insideX, y, sideWindowCenter, trimMat);
+      }
+      wall("side-window-oak-sill", 0.38, 0.12, 6.3, x - Math.sign(x) * 0.01, 1.19, sideWindowCenter, woodTrimMat);
+    }
+    wall("lab-wall-front", 26, roomHeight, 0.28, 0, roomFloorY + roomHeight / 2, roomFrontZ);
     const windowWidth = 10;
     const windowBottom = 1.25;
     const windowTop = 5.15;
-    const backWallZ = 9;
+    const backWallZ = roomBackZ;
     wall("lab-wall-back-left", 8, roomHeight, 0.28, -9, roomFloorY + roomHeight / 2, backWallZ);
     wall("lab-wall-back-right", 8, roomHeight, 0.28, 9, roomFloorY + roomHeight / 2, backWallZ);
     wall("lab-wall-back-sill", windowWidth, windowBottom - roomFloorY, 0.28, 0, roomFloorY + (windowBottom - roomFloorY) / 2, backWallZ);
@@ -232,8 +262,13 @@ export default function App() {
     for (const x of [-12.82, 12.82]) {
       wall("lab-side-baseboard", 0.09, 0.2, 23.1, x, roomFloorY + 0.1, -2.75, woodTrimMat);
     }
-    wall("lab-back-baseboard-left", 8, 0.2, 0.1, -9, roomFloorY + 0.1, 8.82, woodTrimMat);
-    wall("lab-back-baseboard-right", 8, 0.2, 0.1, 9, roomFloorY + 0.1, 8.82, woodTrimMat);
+    wall("lab-back-baseboard-left", 8, 0.2, 0.1, -9, roomFloorY + 0.1, roomBackZ - 0.18, woodTrimMat);
+    wall("lab-back-baseboard-right", 8, 0.2, 0.1, 9, roomFloorY + 0.1, roomBackZ - 0.18, woodTrimMat);
+    const ceiling = MeshBuilder.CreateBox("lab-ceiling", { width: 26, height: 0.18, depth: roomBackZ - roomFrontZ }, scene);
+    ceiling.position.set(0, roomTop + 0.09, (roomBackZ + roomFrontZ) / 2);
+    ceiling.material = wallMat;
+    ceiling.receiveShadows = true;
+
     const ceilingLightMat = new StandardMaterial("ceiling-light-emission", scene);
     ceilingLightMat.emissiveColor = Color3.FromHexString("#ffe5bc");
     ceilingLightMat.disableLighting = true;
@@ -252,13 +287,32 @@ export default function App() {
     benchTexture.uScale = 2;
     benchTexture.vScale = 1;
     benchMat.albedoTexture = benchTexture;
-    const rampMat = mat("ramp", "#e5783d", 0.18, 0.38);
+    const rampMat = mat("ramp", "#ffffff", 0.04, 0.48);
+    const rampTexture = new Texture("/assets/textures/bench_oak.jpg", scene, false, false, Texture.TRILINEAR_SAMPLINGMODE);
+    rampTexture.uScale = 1;
+    rampTexture.vScale = 1;
+    rampMat.albedoTexture = rampTexture;
     const railMat = mat("rail", "#f09b62", 0.18, 0.38);
     const targetMat = mat("target", "#57a983", 0.1, 0.45);
-    const floor = MeshBuilder.CreateBox("workbench", { width: 12.5, height: 0.3, depth: 5.6 }, scene);
-    floor.position.set(0, -0.01, 0);
+    const floor = MeshBuilder.CreateBox("workbench", { width: 11.5, height: 0.1, depth: 3.2 }, scene);
+    floor.position.set(0, 0.09, 0);
     floor.material = benchMat;
     floor.receiveShadows = true;
+    const benchFrameMat = mat("bench-frame", "#655447", 0.12, 0.62);
+    for (const x of [-5.25, 5.25]) {
+      for (const z of [-1.35, 1.35]) {
+        const leg = MeshBuilder.CreateBox("workbench-leg", { width: 0.22, height: 0.47, depth: 0.22 }, scene);
+        leg.position.set(x, -0.195, z);
+        leg.material = benchFrameMat;
+        leg.receiveShadows = true;
+        shadowGenerator.addShadowCaster(leg);
+      }
+    }
+    for (const z of [-1.35, 1.35]) {
+      const apron = MeshBuilder.CreateBox("workbench-apron", { width: 10.5, height: 0.12, depth: 0.1 }, scene);
+      apron.position.set(0, -0.005, z);
+      apron.material = benchFrameMat;
+    }
     const ramp = MeshBuilder.CreateBox("ramp", { width: 5.05, height: 0.16, depth: 1.5 }, scene);
     ramp.position.set(-0.75, 0.65, 0);
     ramp.rotation.z = -0.235;
@@ -281,12 +335,12 @@ export default function App() {
       shadowGenerator.addShadowCaster(support);
     }
     const target = MeshBuilder.CreateTorus("target", { diameter: 1.06, thickness: 0.09, tessellation: 48 }, scene);
-    target.position.set(4.55, 0.152, 0);
-    target.rotation.x = Math.PI / 2;
+    target.position.set(4.55, 0.185, 0);
+    target.rotation.x = 0;
     target.material = targetMat;
     target.receiveShadows = true;
-    const grid = MeshBuilder.CreateGround("grid", { width: 26, height: 23.5, subdivisions: 1 }, scene);
-    grid.position.y = -0.43;
+    const grid = MeshBuilder.CreateGround("grid", { width: 26, height: roomBackZ - roomFrontZ, subdivisions: 1 }, scene);
+    grid.position.set(0, -0.43, (roomBackZ + roomFrontZ) / 2);
     grid.material = mat("floor-matte", "#e2dfd7", 0, 0.9);
     grid.receiveShadows = true;
     const shadow = MeshBuilder.CreateDisc("target-shadow", { radius: 0.56, tessellation: 36 }, scene);
