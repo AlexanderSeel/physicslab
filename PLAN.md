@@ -31,9 +31,9 @@
 - [x] Add production build/typecheck scripts.
 - [x] Move first-lesson science copy into structured bilingual JSON and validate required explanation levels, formula labels, and an HTTPS source.
 - [x] Add CI gates for project validation, solver regression tests, typecheck, and production build.
-- [ ] Confirm the latest GitHub Actions run passes with runtime GLBs and persistence tests.
+- [x] Latest GitHub Actions run passed project validation, all five solver/storage tests, TypeScript typecheck, and the Vite production build.
 
-**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser and production-build acceptance checks remain open. Mass/restitution controls remain follow-up work because contact dynamics are not implemented.
+**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser acceptance checks remain open. Mass/restitution controls remain follow-up work because contact dynamics are not implemented.
 
 ### 1. Mechanical lab
 - Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
