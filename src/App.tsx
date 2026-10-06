@@ -28,7 +28,7 @@ const copy = {
     academy: "ACADEMY", freeLab: "FREE LAB", missions: "MISSIONS", lesson: "FIRST EXPERIMENT",
     lessonTitle: "Can you get the ball to the target?", lessonBody: "Start the simulation and watch gravity pull the ball down the ramp. Try changing gravity, then compare the motion.",
     components: "COMPONENTS", mechanics: "MECHANICS", ball: "Ball", cube: "Cube", ramp: "Ramp",
-    play: "Run", pause: "Pause", step: "Step", reset: "Reset", gravity: "Gravity", xray: "Force X-Ray",
+    play: "Run", pause: "Pause", step: "Step", reset: "Reset", gravity: "Gravity", xray: "Velocity",
     ready: "READY TO EXPERIMENT", running: "SIMULATION RUNNING", paused: "SIMULATION PAUSED", success: "TARGET REACHED",
     fact: motionLesson.locales.en.fact, factTitle: motionLesson.locales.en.factTitle, factText: motionLesson.locales.en.simple,
     learnText: motionLesson.locales.en.learn,
@@ -42,7 +42,7 @@ const copy = {
     academy: "AKADEMIE", freeLab: "FREIES LABOR", missions: "MISSIONEN", lesson: "ERSTES EXPERIMENT",
     lessonTitle: "Schaffst du es, den Ball ins Ziel zu bringen?", lessonBody: "Starte die Simulation und beobachte, wie die Schwerkraft den Ball die Rampe hinunterzieht. Ändere die Gravitation und vergleiche die Bewegung.",
     components: "BAUTEILE", mechanics: "MECHANIK", ball: "Ball", cube: "Würfel", ramp: "Rampe",
-    play: "Start", pause: "Pause", step: "Schritt", reset: "Zurücksetzen", gravity: "Gravitation", xray: "Kraft-Röntgen",
+    play: "Start", pause: "Pause", step: "Schritt", reset: "Zurücksetzen", gravity: "Gravitation", xray: "Geschwindigkeit",
     ready: "BEREIT ZUM EXPERIMENTIEREN", running: "SIMULATION LÄUFT", paused: "SIMULATION PAUSIERT", success: "ZIEL ERREICHT",
     fact: motionLesson.locales.de.fact, factTitle: motionLesson.locales.de.factTitle, factText: motionLesson.locales.de.simple,
     learnText: motionLesson.locales.de.learn,
@@ -280,6 +280,7 @@ export default function App() {
     if (state.kind === "ball") root.rotation.z = state.rotation;
     else root.rotation.z = state.rotation * 0.35;
     if (xrayRef.current) {
+      arrow.rotation.z = state.x < 1.7 ? -0.235 : 0;
       if (arrow) {
         arrow.setEnabled(state.speed > 0.04);
         arrow.position.set(state.x, state.y + 0.35, 0);
@@ -386,7 +387,7 @@ export default function App() {
         <aside className="left-rail">
           <div className="rail-heading"><span className="section-kicker">{t.lesson}</span><span className="lesson-number">01 / 08</span></div>
           <h2>{t.lessonTitle}</h2><p className="lesson-copy">{t.lessonBody}</p>
-          <div className="progress-track"><span /></div><div className="progress-caption"><span>{t.motion}</span><span>{lessonCompleted ? t.lessonCompleted : t.lessonProgress}</span></div>
+          <div className="progress-track"><span style={{ width: lessonCompleted ? "100%" : "16%" }} /></div><div className="progress-caption"><span>{t.motion}</span><span>{lessonCompleted ? t.lessonCompleted : t.lessonProgress}</span></div>
           <div className="separator" />
           <div className="rail-heading"><span className="section-kicker">{t.components}</span></div>
           <div className="category-label">{t.mechanics}</div>
@@ -399,7 +400,7 @@ export default function App() {
         <section className="lab-column">
           <div className="lab-toolbar"><div className="lab-title"><span className="live-dot" /> <b>{t.workbench}</b><span className="toolbar-divider">/</span><span>{t.rampMotion}</span></div><div className="toolbar-tools"><button className={xray ? "tool-button selected" : "tool-button"} onClick={() => setXray(!xray)}><span>◉</span> {t.xray}</button><button className={measureVisible ? "tool-button selected" : "tool-button"} aria-pressed={measureVisible} onClick={() => setMeasureVisible(value => !value)}><span>⌗</span> {t.measure}</button> </div></div>
           <div className="scene-frame"><canvas ref={canvasRef} aria-label="Interactive 3D physics workbench" /><div className="scene-badge"><span className={playing ? "badge-dot active" : "badge-dot"} />{targetReached ? t.success : playing ? t.running : time > 0 ? t.paused : t.ready}</div>{measureVisible && <div className="ruler-legend" role="status"><b>{t.measureOn}</b><span>{t.rulerScale}</span></div>}<div className="scene-hint">{t.orbitHint} <span>·</span> {t.zoomHint}</div><div className="target-label">{t.target}<span>04</span></div>
-            {xray && <div className="xray-legend"><b>{t.xray.toUpperCase()}</b><span><i className="gravity-line" /> Gravity · {gravity.toFixed(1)} m/s²</span><span><i className="motion-line" /> Velocity</span></div>}
+            {xray && <div className="xray-legend"><b>{t.xray.toUpperCase()}</b><span><i className="motion-line" /> {t.speed} · {visualsRef.current.at(-1)?.state.speed.toFixed(1) ?? "0.0"} m/s</span></div>}
           </div>
           <div className="transport"><div className="transport-buttons"><button className="reset-button" onClick={reset} title={t.reset}>↺</button>{playing ? <button className="play-button" onClick={pause}>Ⅱ <span>{t.pause}</span></button> : <button className="play-button" onClick={start}>▶ <span>{t.play}</span></button>}<button className="step-button" onClick={step}>▸│ <span>{t.step}</span></button><span className="transport-divider" /><span className="time-readout"><small>{t.time}</small><b>{time.toFixed(2)}<i>s</i></b></span><span className="transport-divider stopwatch-divider" /><div className="stopwatch-readout"><span className="stopwatch-value"><small>{t.stopwatch}</small><b>{stopwatchTime.toFixed(1)}<i>s</i></b></span><div className="stopwatch-controls"><button type="button" onClick={toggleStopwatch} aria-label={stopwatchRunning ? t.stopwatchPause : t.stopwatchStart} title={stopwatchRunning ? t.stopwatchPause : t.stopwatchStart}>{stopwatchRunning ? "Ⅱ" : "▶"}</button><button type="button" onClick={resetStopwatch} aria-label={t.stopwatchReset} title={t.stopwatchReset}>↺</button></div></div></div>
             <div className="gravity-control"><label htmlFor="gravity">{t.gravity} <b>{gravity.toFixed(1)} m/s²</b></label><input id="gravity" type="range" min="1" max="25" step="0.1" value={gravity} onChange={e => setGravity(Number(e.target.value))} /><span className="gravity-ends"><span>MOON 1.6</span><span>EARTH 9.8</span><span>JUPITER 24.8</span></span></div>
