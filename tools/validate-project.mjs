@@ -107,7 +107,7 @@ if (manifest) {
                 issues.push(`${label}: first GLB chunk must contain JSON`);
               } else {
                 try {
-                  const json = bytes.subarray(20, 20 + chunkLength).toString("utf8").replace(/\\0+$/g, "").trim();
+                  const json = bytes.subarray(20, 20 + chunkLength).toString("utf8").replace(/\0+$/g, "").trim();
                   const gltf = JSON.parse(json);
                   if (gltf.asset?.version !== "2.0") issues.push(`${label}: glTF asset version must be 2.0`);
                 } catch {
