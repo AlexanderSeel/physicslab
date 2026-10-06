@@ -171,6 +171,9 @@ export default function App() {
         const length = Math.min(1.25, state.speed * 0.35);
         arrow.scaling.x = length;
       }
+    } else {
+      const arrow = mesh.metadata?.arrow as Mesh | undefined;
+      arrow?.setEnabled(false);
     }
   };
 
