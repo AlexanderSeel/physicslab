@@ -248,6 +248,10 @@ export default function App() {
     }
 
     const benchMat = mat("bench", "#c4a47c", 0.02, 0.68);
+    const benchTexture = new Texture("/assets/textures/bench_oak.jpg", scene, false, false, Texture.TRILINEAR_SAMPLINGMODE);
+    benchTexture.uScale = 2;
+    benchTexture.vScale = 1;
+    benchMat.albedoTexture = benchTexture;
     const rampMat = mat("ramp", "#e5783d", 0.18, 0.38);
     const railMat = mat("rail", "#f09b62", 0.18, 0.38);
     const targetMat = mat("target", "#57a983", 0.1, 0.45);
