@@ -28,7 +28,7 @@ const copy = {
     learnText: "A solid sphere rolling without slipping uses gravity both to move forward and to rotate. That makes its acceleration lower than a frictionless sliding block.",
     technicalText: "For a solid sphere, I = 2/5 mR² and a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), assuming ideal rolling without slipping.",
     formulaCaption: "Solid sphere · rolling without slipping", source: "OpenStax · University Physics Vol. 1",
-    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "TIME", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: "ROLLING SPHERE ACCELERATION",
+    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "TIME", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: "ROLLING SPHERE ACCELERATION",
   },
   de: {
     eyebrow: "PHYSICSLAB / BEWEGUNG 01", title: "Bauen. Beobachten. Verstehen.",
@@ -42,9 +42,20 @@ const copy = {
     learnText: "Eine rollende Vollkugel nutzt die Schwerkraft sowohl für die Vorwärtsbewegung als auch für die Drehung. Deshalb ist ihre Beschleunigung kleiner als die eines reibungsfrei gleitenden Körpers.",
     technicalText: "Für eine Vollkugel gilt I = 2/5 mR² und a = g sin(θ) / (1 + I/mR²) = 5/7 g sin(θ), bei idealem Rollen ohne Gleiten.",
     formulaCaption: "Vollkugel · Rollen ohne Gleiten", source: "OpenStax · University Physics Bd. 1",
-    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: "BESCHLEUNIGUNG DER ROLLENDEN KUGEL",
+    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: "BESCHLEUNIGUNG DER ROLLENDEN KUGEL",
   },
 } as const;
+
+const LESSON_PROGRESS_KEY = "physicslab.lesson.motion-01";
+
+function readLessonCompletion(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(LESSON_PROGRESS_KEY) === "complete";
+  } catch {
+    return false;
+  }
+}
 
 interface VisualBody { mesh: Mesh; state: BodyState }
 const bodyRadius = 0.22;
@@ -64,6 +75,18 @@ export default function App() {
   const [gravity, setGravity] = useState(9.81);
   const [xray, setXray] = useState(false);
   const [targetReached, setTargetReached] = useState(false);
+  const [lessonCompleted, setLessonCompleted] = useState(readLessonCompletion);
+  const lessonCompletedRef = useRef(lessonCompleted);
+  const recordLessonCompletion = useCallback(() => {
+    if (lessonCompletedRef.current) return;
+    lessonCompletedRef.current = true;
+    setLessonCompleted(true);
+    try {
+      window.localStorage.setItem(LESSON_PROGRESS_KEY, "complete");
+    } catch {
+      // The lesson still completes for this session if browser storage is unavailable.
+    }
+  }, []);
   const [depth, setDepth] = useState<"simple" | "learn" | "technical">("simple");
   const xrayRef = useRef(false);
   const t = copy[locale];
@@ -141,8 +164,9 @@ export default function App() {
         if (changed) {
           for (const visual of visualsRef.current) syncBody(visual);
           setTime(solverRef.current.elapsed);
-          if (solverRef.current.bodies.some(body => body.finished)) {
+          if (solverRef.current.hasReachedTarget("ball")) {
             setTargetReached(true);
+            recordLessonCompletion();
             playingRef.current = false;
             setPlaying(false);
           }
@@ -162,7 +186,7 @@ export default function App() {
       sceneRef.current = null;
       engineRef.current = null;
     };
-  }, []);
+  }, [recordLessonCompletion]);
 
   const syncBody = (visual: VisualBody) => {
     const { mesh, state } = visual;
@@ -205,7 +229,6 @@ export default function App() {
     visualsRef.current.push(visual);
     syncBody(visual);
     setBodyCount(solverRef.current.bodies.length);
-    setTargetReached(false);
   }, [xray]);
 
   const start = () => {
@@ -221,6 +244,10 @@ export default function App() {
     solverRef.current.step();
     visualsRef.current.forEach(syncBody);
     setTime(solverRef.current.elapsed);
+    if (solverRef.current.hasReachedTarget("ball")) {
+      setTargetReached(true);
+      recordLessonCompletion();
+    }
   };
   const reset = () => {
     pause();
@@ -256,7 +283,7 @@ export default function App() {
         <aside className="left-rail">
           <div className="rail-heading"><span className="section-kicker">{t.lesson}</span><span className="lesson-number">01 / 08</span></div>
           <h2>{t.lessonTitle}</h2><p className="lesson-copy">{t.lessonBody}</p>
-          <div className="progress-track"><span /></div><div className="progress-caption"><span>Motion</span><span>1 of 8</span></div>
+          <div className="progress-track"><span /></div><div className="progress-caption"><span>{t.motion}</span><span>{lessonCompleted ? t.lessonCompleted : t.lessonProgress}</span></div>
           <div className="separator" />
           <div className="rail-heading"><span className="section-kicker">{t.components}</span><button className="text-button">＋</button></div>
           <div className="category-label">{t.mechanics}</div>
