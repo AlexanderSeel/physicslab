@@ -30,10 +30,10 @@ The generator uses Blender's bundled Python and glTF exporter. Run the command f
 
 ### Windows PowerShell
 
-Update the Blender path to match the version installed on your PC:
+Run these as two separate PowerShell commands from the repository root. This path matches Blender 5.2; change it if Blender is installed elsewhere:
 
 ```powershell
-$blender = "C:\Program Files\Blender Foundation\Blender 5.3\blender.exe"
+$blender = "D:\Program Files\Blender Foundation\Blender 5.2\blender.exe"
 & $blender --background --python tools/blender/generate_assets.py
 ```
 
