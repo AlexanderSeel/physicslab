@@ -30,7 +30,7 @@ COLORS = {
     "steel": (0.35, 0.43, 0.44, 1.0),
     "silver": (0.64, 0.71, 0.69, 1.0),
     "wood": (0.39, 0.22, 0.12, 1.0),
-    "glass": (0.30, 0.66, 0.69, 0.28),
+    "glass": (0.30, 0.66, 0.69, 0.42),
     "white": (0.86, 0.88, 0.82, 1.0),
     "black": (0.018, 0.024, 0.025, 1.0),
 }
@@ -101,8 +101,10 @@ def material(name, color, metallic=0.0, roughness=0.42, emission=0.0):
             if strength:
                 strength.default_value = emission
     if color[3] < 1:
-        mat.blend_method = "BLEND"
-        mat.use_nodes = True
+        if hasattr(mat, "surface_render_method"):
+            mat.surface_render_method = "DITHERED"
+        elif hasattr(mat, "blend_method"):
+            mat.blend_method = "BLEND"
     return mat
 
 
@@ -136,7 +138,6 @@ def box(root, name, loc, dims, color="teal", bevel=0.025, metallic=0.0, roughnes
         modifier = obj.modifiers.new("Soft manufactured edges", "BEVEL")
         modifier.width = min(bevel, min(dims) * 0.18)
         modifier.segments = 3
-        modifier.affect = "EDGES"
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.modifier_apply(modifier=modifier.name)
     mesh_material(obj, name + "_mat", color, metallic, roughness)
@@ -335,8 +336,9 @@ def build_bucket(root):
 def build_water_tank(root):
     box(root, "Tank_Base", (0, 0, 0.08), (1.05, 0.84, 0.16), "steel", 0.025, 0.55)
     for x in (-0.48, 0.48):
-        for y in (-0.38, 0.38):
-            box(root, "Tank_Glass_Wall", (x, y, 0.68), (0.06, 0.82, 1.1) if x else (1.0, 0.06, 1.1), "glass", 0.006)
+        box(root, "Tank_Glass_Side", (x, 0, 0.68), (0.06, 0.76, 1.1), "glass", 0.006)
+    for y in (-0.38, 0.38):
+        box(root, "Tank_Glass_End", (0, y, 0.68), (0.96, 0.06, 1.1), "glass", 0.006)
     box(root, "Tank_Water", (0, 0, 0.5), (0.86, 0.64, 0.55), "blue_light", 0.015)
     cylinder(root, "Tank_Inlet", (-0.58, 0, 0.9), 0.085, 0.25, "steel", "X")
     cylinder(root, "Tank_Outlet", (0.58, 0, 0.27), 0.085, 0.25, "steel", "X")
@@ -498,7 +500,7 @@ def build_thermometer(root):
 
 def build_sensor(root):
     box(root, "Sensor_Case", (0, 0, 0.15), (0.38, 0.3, 0.22), "dark_teal", 0.035)
-    sphere(root, "Sensor_Lens", (0, -0.16, 0.18), 0.07, "orange", None, 0.0, 0.2, 1.4)
+    sphere(root, "Sensor_Lens", (0, -0.16, 0.18), 0.07, "orange", None, 0.0, 0.2)
     socket(root, "SENSOR_INPUT", (0, 0, 0.28), "SENSOR")
     socket(root, "LOGIC_OUT", (0.25, 0, 0.08), "LOGIC")
     return {"type": "box", "size": [0.38, 0.3, 0.22]}
