@@ -16,7 +16,7 @@ The asset pack covers the first mechanics experiments and the planned water, ele
 
 The generated models use meter-scale dimensions and a consistent Z-up Blender scene. GLB export converts to glTF's Y-up convention. Interactive parts include named empty markers such as `FLUID_IN`, `SHAFT_AXIS`, `ELECTRICAL_POSITIVE`, and `INTERACTION_HANDLE`. Each model also gets collider and socket metadata in `public/assets/asset-manifest.json`.
 
-The models are a clean, stylized starting point. Review dimensions, socket positions, transparent materials, and collider metadata before using them in a lesson that teaches measurements or contact physics.
+The models use controlled geometry and packed, tileable base-color, roughness, and normal maps. The deterministic fallback maps add rubber grain, painted finish, brushed-metal variation, and wood grain without changing collider dimensions. Review dimensions, socket positions, transparent materials, and collider metadata before using them in a lesson that teaches measurements or contact physics.
 
 ## Prerequisites
 
@@ -44,6 +44,12 @@ blender --background --python tools/blender/generate_assets.py
 ```
 
 The command exits after writing the files. Blender's background mode is intentional: the generator creates the geometry and exports it without needing UI automation.
+
+## Surface textures and visual direction
+
+The generator embeds packed PBR maps in each GLB. To art-direct a material with an image-generated texture, add tileable maps under `tools/blender/textures/` using names such as `wood_basecolor.png`, `wood_roughness.png`, and `wood_normal.png`. Supported styles are `wood`, `rubber`, `metal`, and `paint`. Base-color maps should be evenly lit and free of shadows/highlights; roughness maps should be grayscale; normal maps must be tangent-space normal maps. Any missing map falls back to the deterministic generated map. Keep source textures with the Blender generator and regenerate only the affected model using `--only <asset-id>`.
+
+The generated lab screenshot and asset contact sheet are visual direction only. Treat the Blender-authored mesh and its collider/socket metadata as the authoritative objects. Review any regenerated GLB in a glTF viewer and in the browser before marking its appearance done.
 
 ## Generate only selected models
 
