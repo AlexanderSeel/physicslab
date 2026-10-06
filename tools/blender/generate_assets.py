@@ -81,7 +81,112 @@ def clear_scene():
     scene.unit_settings.scale_length = 1.0
 
 
-def material(name, color, metallic=0.0, roughness=0.42, emission=0.0):
+def _linear_to_srgb(value):
+    value = max(0.0, min(1.0, value))
+    return 12.92 * value if value < 0.0031308 else 1.055 * (value ** (1.0 / 2.4)) - 0.055
+
+
+def _texture_pixels(image, pixels):
+    image.pixels.foreach_set(pixels)
+    image.file_format = "PNG"
+    image.pack()
+    return image
+
+
+def _make_pbr_maps(name, color, roughness, style):
+    """Create packed, tileable PBR maps that the glTF exporter can embed."""
+    size = 128
+    seed = sum(ord(char) for char in name) * 0.017
+    height = [[0.0] * size for _ in range(size)]
+    modulation = [[0.0] * size for _ in range(size)]
+    for y in range(size):
+        v = y / size
+        for x in range(size):
+            u = x / size
+            fine = math.sin(2 * math.pi * (u * 37 + 0.19 * math.sin(v * 2 * math.pi * 5 + seed)))
+            grain = math.sin(2 * math.pi * (v * 8 + 0.12 * math.sin(u * 2 * math.pi * 3 + seed)))
+            noise = math.sin((x * 12.9898 + y * 78.233 + seed) * 0.73)
+            if style == "wood":
+                value = 0.94 + 0.055 * (0.5 + 0.5 * grain) + 0.012 * noise
+                relief = 0.5 + 0.5 * grain + 0.08 * fine
+            elif style == "rubber":
+                value = 0.95 + 0.025 * noise + 0.012 * fine
+                relief = 0.5 + 0.18 * noise + 0.12 * fine
+            elif style == "metal":
+                value = 0.98 + 0.012 * fine + 0.006 * noise
+                relief = 0.5 + 0.12 * fine
+            else:
+                value = 0.985 + 0.012 * noise + 0.006 * fine
+                relief = 0.5 + 0.09 * noise + 0.04 * fine
+            modulation[y][x] = value
+            height[y][x] = relief
+
+    base_pixels = []
+    rough_pixels = []
+    normal_pixels = []
+    for y in range(size):
+        for x in range(size):
+            factor = modulation[y][x]
+            base_pixels.extend((_linear_to_srgb(color[0] * factor), _linear_to_srgb(color[1] * factor), _linear_to_srgb(color[2] * factor), color[3]))
+            rough = max(0.04, min(1.0, roughness + (1.0 - factor) * 0.32))
+            rough_pixels.extend((rough, rough, rough, 1.0))
+            left = height[y][(x - 1) % size]
+            right = height[y][(x + 1) % size]
+            down = height[(y - 1) % size][x]
+            up = height[(y + 1) % size][x]
+            nx = -(right - left) * 5.5
+            ny = -(up - down) * 5.5
+            inv_length = 1.0 / math.sqrt(nx * nx + ny * ny + 1.0)
+            normal_pixels.extend((0.5 + 0.5 * nx * inv_length, 0.5 + 0.5 * ny * inv_length, 0.5 + 0.5 * inv_length, 1.0))
+
+    maps = {}
+    texture_dir = Path(__file__).resolve().parent / "textures"
+    for suffix, pixels, color_space in (
+        ("BaseColor", base_pixels, "sRGB"),
+        ("Roughness", rough_pixels, "Non-Color"),
+        ("Normal", normal_pixels, "Non-Color"),
+    ):
+        image_name = "PL_" + name + "_" + suffix
+        external = texture_dir / (style + "_" + suffix.lower() + ".png")
+        if external.is_file():
+            image = bpy.data.images.load(str(external), check_existing=True)
+            image.name = image_name
+            image.pack()
+        else:
+            image = bpy.data.images.get(image_name)
+            if image is None:
+                image = bpy.data.images.new(image_name, width=size, height=size, alpha=True)
+            _texture_pixels(image, pixels)
+        image.colorspace_settings.name = color_space
+        maps[suffix] = image
+    return maps
+
+
+def _connect_pbr_maps(mat, shader, name, color, roughness, style):
+    maps = _make_pbr_maps(name, color, roughness, style)
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    for suffix, input_name in (("BaseColor", "Base Color"), ("Roughness", "Roughness")):
+        node = nodes.new("ShaderNodeTexImage")
+        node.name = name + "_" + suffix
+        node.label = suffix + " map"
+        node.image = maps[suffix]
+        node.location = (-520, 140 if suffix == "BaseColor" else -90)
+        links.new(node.outputs["Color"], shader.inputs[input_name])
+    normal_image = nodes.new("ShaderNodeTexImage")
+    normal_image.name = name + "_Normal"
+    normal_image.label = "Normal map"
+    normal_image.image = maps["Normal"]
+    normal_image.location = (-520, -320)
+    normal_node = nodes.new("ShaderNodeNormalMap")
+    normal_node.name = name + "_NormalMap"
+    normal_node.inputs["Strength"].default_value = 0.35 if style in ("wood", "rubber") else 0.18
+    normal_node.location = (-250, -300)
+    links.new(normal_image.outputs["Color"], normal_node.inputs["Color"])
+    links.new(normal_node.outputs["Normal"], shader.inputs["Normal"])
+
+
+def material(name, color, metallic=0.0, roughness=0.42, emission=0.0, texture_style="paint"):
     mat = bpy.data.materials.get("PL_" + name)
     if mat is None:
         mat = bpy.data.materials.new("PL_" + name)
@@ -89,9 +194,13 @@ def material(name, color, metallic=0.0, roughness=0.42, emission=0.0):
     mat.use_nodes = True
     shader = mat.node_tree.nodes.get("Principled BSDF")
     if shader:
-        shader.inputs["Base Color"].default_value = color
         shader.inputs["Metallic"].default_value = metallic
         shader.inputs["Roughness"].default_value = roughness
+        style = "metal" if metallic >= 0.45 else texture_style
+        _connect_pbr_maps(mat, shader, name, color, roughness, style)
+        alpha_input = shader.inputs.get("Alpha")
+        if alpha_input and color[3] < 1.0:
+            alpha_input.default_value = color[3]
         if "Alpha" in shader.inputs:
             shader.inputs["Alpha"].default_value = color[3]
         if emission > 0:
@@ -117,7 +226,8 @@ def parent_asset(obj, root):
 def mesh_material(obj, mat_name, color_key, metallic=0.0, roughness=0.42, emission=0.0):
     obj.data.materials.clear()
     color = COLORS[color_key] if isinstance(color_key, str) else color_key
-    obj.data.materials.append(material(mat_name, color, metallic, roughness, emission))
+    style = "rubber" if obj.name.lower().startswith("ball") else color_key if isinstance(color_key, str) else "paint"
+    obj.data.materials.append(material(mat_name, color, metallic, roughness, emission, style))
     return obj
 
 
@@ -233,6 +343,7 @@ def socket(root, name, loc, socket_type="GENERIC"):
 
 def build_ball(root):
     sphere(root, "Ball_Render", (0, 0, 0.22), 0.22, "teal")
+    torus(root, "Ball_Equator_Seam", (0, 0, 0.22), 0.219, 0.004, "dark_teal")
     return {"type": "sphere", "radius": 0.22}
 
 
