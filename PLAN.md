@@ -1,0 +1,92 @@
+# PhysicsLab Implementation Plan
+
+## Product principle
+
+**Learn → Build → Observe → Measure → Change → Predict → Experiment.** All learning journeys use the same simulation state and solvers; they progressively reveal controls, vocabulary, measurements, and assistance. Rendered Babylon meshes are views of simulation state, never the source of physical truth.
+
+## Architecture decisions
+
+- **Web app:** React 19, TypeScript, Vite.
+- **3D:** Babylon.js for scene, materials, picking, rendering, and asset loading.
+- **Rigid mechanics:** Babylon Havok plugin for rigid-body contacts and constraints. Keep domain solvers behind interfaces so fluid, electrical, thermal, gas, and aerodynamic models do not depend on Havok.
+- **Blender:** Use Blender as an optional authoring and batch-export tool, not an in-browser dependency. Author source `.blend` files, export glTF/GLB, and load them at runtime. Begin with Babylon/code-built primitives and procedural materials; add Blender assets when stable attachment points and colliders are useful.
+- **Learning content:** Structured, reviewed data with English and German translations, formula variables/units, and cited sources. Never generate factual claims at runtime.
+- **Simulation:** A fixed-step clock owns simulation advancement. Domain systems update deterministically from that clock; Babylon synchronizes presentation after each step.
+- **Exchange:** Versioned `.physicslab` experiment and `.physicsmission` challenge formats.
+
+## Milestones
+
+### 0. Foundation and first playable slice — in progress
+- [x] Establish product principles, architecture boundaries, and staged roadmap.
+- [ ] Set up React/Vite/TypeScript and the Babylon scene lifecycle.
+- [ ] Build a responsive laboratory shell with English/German locale selection.
+- [ ] Add a fixed-step clock with pause, resume, single-step, and reset.
+- [ ] Add an initial mechanics scene: ground, ramp, ball, and target.
+- [ ] Add ball/cube/ramp placement from a small component palette.
+- [ ] Expose gravity and basic mass/restitution controls.
+- [ ] Add a validated first lesson: roll a ball into a target.
+- [ ] Add a short fact card with source metadata and simple/learn/technical explanation levels.
+- [ ] Add build/typecheck and content-validation checks.
+
+**Acceptance:** A learner can place a ball and ramp, run/pause/step/reset the real mechanics simulation, change gravity, and switch the core UI between EN and DE.
+
+### 1. Mechanical lab
+- Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
+- Object selection/inspection, snapping, undo/redo, save/load, deterministic reset.
+- Force/velocity X-Ray, ruler, stopwatch, scale, and energy readouts.
+- Lessons for gravity, velocity, acceleration, friction, momentum, collisions, torque, and mechanical advantage.
+
+### 2. Fluids and water
+- Separate low-cost fluid network model: tanks, fluid quantity/level, hydrostatic pressure, pipe resistance, flow, valves, pumps, and buoyancy.
+- Dynamic surface/flow presentation via Babylon meshes, particles, and shaders; visual fluid effects must not be mistaken for the solver.
+- Flow/pressure X-Ray and meters; sourced bilingual facts.
+
+### 3. Electricity and cross-domain coupling
+- Circuit graph and solver for batteries, wires, switches, resistors, lamps, motors, generators, and sensors.
+- Couple motor torque into mechanics and mechanical generator output into circuit state.
+- Circuit inspection, voltage/current/power meters, and missions that combine water wheels, generators, and lamps.
+
+### 4. Gas, heat, and fire
+- Gas state and ideal-gas relationships; balloons, pumps, pistons, and valves.
+- Thermal model for heat capacity, conduction, convection approximation, phase changes, and ignition.
+- Particle/shader visuals separated from temperature/energy calculations.
+
+### 5. Wind, waves, and magnetism
+- Approximate velocity-field forces for fans, sails, lift/drag, and turbines.
+- Springs, oscillations, sound/wave visualization, resonance, permanent magnets, electromagnets, and induction.
+- Extend X-Ray, instruments, and fact catalog without coupling them to UI rendering.
+
+### 6. Academy and free lab
+- Learning journeys: Explorer, Student, Builder, Physics Lab; same underlying world.
+- Guided missions with real object/connection validation, pulsing targets, optional hints, and observable consequences.
+- Full categorized component palette, mission/experiment creator, versioned import/export, local progress.
+- Rube Goldberg challenges across mechanical, fluid, electrical, thermal, gas, and air domains.
+
+### 7. Asset and release pipeline
+- Blender source library with named attachment empties, origins, units, and collision meshes.
+- Blender batch script validates and exports GLB, renders catalogue thumbnails, and reports missing metadata.
+- CI validates learning data, typechecks, tests solver invariants, and builds production output.
+- Responsive/accessibility QA, localization completeness, performance budgets, deployment documentation.
+
+## Simulation contracts
+
+- `SimulationState` stores physical values and stable entity IDs, independent of Babylon objects.
+- Systems expose `step(state, dt)` and never read React or Babylon scene state.
+- `SimulationClock` uses a fixed timestep, bounded catch-up, and explicit pause/step/reset controls.
+- Rendering interpolates/presents state; it cannot change solver outcomes.
+- Cross-domain effects use explicit typed ports/events: mechanical, fluid, gas, electrical, thermal, air, and logic.
+
+## First asset strategy
+
+1. Use code-generated geometry for the first ball, cube, floor, ramp, supports, and target. This keeps physics dimensions and colliders explicit while the interaction model is changing.
+2. Use Blender for distinctive reusable equipment and assets with named attachment markers (hinges, pipe ports, axles, wire terminals, handles), then export GLB.
+3. Use 2D images for lesson illustrations, catalogue thumbnails, labels, and backgrounds. A 2D image-to-3D conversion can help create a rough visual reference or decorative mesh, but it is not reliable enough for accurate, editable, physically meaningful parts. Do not make it the core model workflow.
+4. Provide a manual GLB import path and generated thumbnails; do not require Blender on the learner's device or at runtime.
+
+## Risks and mitigations
+
+- **Physics scope:** Havok is not a universal simulator. Keep each non-rigid domain as an explicit approximate solver and describe its assumptions.
+- **Fluid appearance:** A convincing fluid renderer is not proof of fluid dynamics. Keep physical quantity/pressure/flow models inspectable.
+- **Performance:** Start with simple colliders and a modest object budget; make advanced GPU visuals optional.
+- **Science accuracy:** Store formulas, units, explanation copy, and references as data; validate content structure and have claims reviewed.
+- **Asset mismatch:** Define scale, origins, named sockets, and collider conventions before growing the Blender library.
