@@ -9,9 +9,11 @@ import {
   Mesh,
   MeshBuilder,
   PBRMaterial,
+  PointLight,
   Scene,
   ShadowGenerator,
   StandardMaterial,
+  Texture,
   Vector3,
 } from "@babylonjs/core";
 import motionLesson from "./content/motion-01.json";
@@ -161,6 +163,86 @@ export default function App() {
       material.roughness = roughness;
       return material;
     };
+    // Spherical 360° outdoor environment, visible through the glazed laboratory windows.
+    const environment = MeshBuilder.CreateSphere("outdoor-environment", {
+      diameter: 240,
+      segments: 48,
+      sideOrientation: Mesh.BACKSIDE,
+    }, scene);
+    const environmentMaterial = new StandardMaterial("outdoor-environment-material", scene);
+    const environmentTexture = new Texture("/assets/textures/lab_environment.jpg", scene, true, false, Texture.TRILINEAR_SAMPLINGMODE);
+    environmentTexture.uScale = -1;
+    environmentMaterial.emissiveTexture = environmentTexture;
+    environmentMaterial.disableLighting = true;
+    environmentMaterial.backFaceCulling = false;
+    environment.material = environmentMaterial;
+    environment.isPickable = false;
+    environment.infiniteDistance = true;
+
+    const roomFloorY = -0.43;
+    const roomTop = 6.4;
+    const roomHeight = roomTop - roomFloorY;
+    const wallMat = mat("warm-lab-plaster", "#d6d0c2", 0, 0.92);
+    const trimMat = mat("lab-window-trim", "#44534e", 0.48, 0.36);
+    const woodTrimMat = mat("lab-oak-trim", "#966d4b", 0.03, 0.62);
+    const glassMat = new StandardMaterial("window-glass", scene);
+    glassMat.diffuseColor = Color3.FromHexString("#c4e1e5");
+    glassMat.emissiveColor = Color3.FromHexString("#6f8d91");
+    glassMat.alpha = 0.2;
+    glassMat.specularColor = Color3.FromHexString("#ffffff");
+    glassMat.specularPower = 96;
+    glassMat.backFaceCulling = false;
+
+    const wall = (name: string, width: number, height: number, depth: number, x: number, y: number, z: number, material = wallMat) => {
+      const piece = MeshBuilder.CreateBox(name, { width, height, depth }, scene);
+      piece.position.set(x, y, z);
+      piece.material = material;
+      piece.receiveShadows = true;
+      return piece;
+    };
+    // Four enclosing walls. The back wall is split around a broad multi-pane window.
+    wall("lab-wall-left", 0.28, roomHeight, 23.5, -13, roomFloorY + roomHeight / 2, -2.75);
+    wall("lab-wall-right", 0.28, roomHeight, 23.5, 13, roomFloorY + roomHeight / 2, -2.75);
+    wall("lab-wall-front", 26, roomHeight, 0.28, 0, roomFloorY + roomHeight / 2, -14.5);
+    const windowWidth = 10;
+    const windowBottom = 1.25;
+    const windowTop = 5.15;
+    const backWallZ = 9;
+    wall("lab-wall-back-left", 8, roomHeight, 0.28, -9, roomFloorY + roomHeight / 2, backWallZ);
+    wall("lab-wall-back-right", 8, roomHeight, 0.28, 9, roomFloorY + roomHeight / 2, backWallZ);
+    wall("lab-wall-back-sill", windowWidth, windowBottom - roomFloorY, 0.28, 0, roomFloorY + (windowBottom - roomFloorY) / 2, backWallZ);
+    wall("lab-wall-back-header", windowWidth, roomTop - windowTop, 0.28, 0, windowTop + (roomTop - windowTop) / 2, backWallZ);
+    const glass = MeshBuilder.CreateBox("large-lab-window", { width: windowWidth - 0.18, height: windowTop - windowBottom - 0.08, depth: 0.06 }, scene);
+    glass.position.set(0, (windowTop + windowBottom) / 2, backWallZ + 0.17);
+    glass.material = glassMat;
+    glass.isPickable = false;
+    // Dark anodized frame and slim oak inner returns make the glazing read at a glance.
+    for (const x of [-5, -1.7, 1.7, 5]) {
+      wall("window-vertical-frame", 0.075, windowTop - windowBottom + 0.14, 0.11, x, (windowTop + windowBottom) / 2, backWallZ + 0.2, trimMat);
+    }
+    for (const y of [windowBottom, 3.22, windowTop]) {
+      wall("window-horizontal-frame", windowWidth + 0.16, 0.075, 0.11, 0, y, backWallZ + 0.2, trimMat);
+    }
+    wall("back-wall-oak-sill", windowWidth + 0.3, 0.12, 0.38, 0, windowBottom - 0.06, backWallZ - 0.01, woodTrimMat);
+    // Baseboards and a restrained oak wall band provide scale and material variation.
+    for (const x of [-12.82, 12.82]) {
+      wall("lab-side-baseboard", 0.09, 0.2, 23.1, x, roomFloorY + 0.1, -2.75, woodTrimMat);
+    }
+    wall("lab-back-baseboard-left", 8, 0.2, 0.1, -9, roomFloorY + 0.1, 8.82, woodTrimMat);
+    wall("lab-back-baseboard-right", 8, 0.2, 0.1, 9, roomFloorY + 0.1, 8.82, woodTrimMat);
+    const ceilingLightMat = new StandardMaterial("ceiling-light-emission", scene);
+    ceilingLightMat.emissiveColor = Color3.FromHexString("#ffe5bc");
+    ceilingLightMat.disableLighting = true;
+    for (const x of [-4.2, 0, 4.2]) {
+      const fixture = MeshBuilder.CreateBox("ceiling-light-fixture", { width: 2.4, height: 0.08, depth: 0.58 }, scene);
+      fixture.position.set(x, 5.95, -0.6);
+      fixture.material = ceilingLightMat;
+      const fill = new PointLight("ceiling-fill", new Vector3(x, 5.7, -0.6), scene);
+      fill.diffuse = Color3.FromHexString("#ffe7c7");
+      fill.intensity = 0.22;
+      fill.range = 13;
+    }
+
     const benchMat = mat("bench", "#c4a47c", 0.02, 0.68);
     const rampMat = mat("ramp", "#e5783d", 0.18, 0.38);
     const railMat = mat("rail", "#f09b62", 0.18, 0.38);
@@ -195,7 +277,7 @@ export default function App() {
     target.rotation.x = Math.PI / 2;
     target.material = targetMat;
     target.receiveShadows = true;
-    const grid = MeshBuilder.CreateGround("grid", { width: 20, height: 12, subdivisions: 1 }, scene);
+    const grid = MeshBuilder.CreateGround("grid", { width: 26, height: 23.5, subdivisions: 1 }, scene);
     grid.position.y = -0.43;
     grid.material = mat("floor-matte", "#e2dfd7", 0, 0.9);
     grid.receiveShadows = true;

@@ -147,7 +147,9 @@ def _make_pbr_maps(name, color, roughness, style):
         ("Normal", normal_pixels, "Non-Color"),
     ):
         image_name = "PL_" + name + "_" + suffix
-        external = texture_dir / (style + "_" + suffix.lower() + ".png")
+        external_png = texture_dir / (style + "_" + suffix.lower() + ".png")
+        external_jpg = texture_dir / (style + "_" + suffix.lower() + ".jpg")
+        external = external_png if external_png.is_file() else external_jpg
         if external.is_file():
             image = bpy.data.images.load(str(external), check_existing=True)
             image.name = image_name
