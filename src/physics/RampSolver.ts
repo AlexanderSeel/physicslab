@@ -11,11 +11,11 @@ export interface BodyState {
 }
 
 const RAMP_START_X = -3.2;
-const RAMP_END_X = RAMP_START_X + (RAMP_START_Y - TABLE_TOP) / Math.tan(RAMP_ANGLE);
 const RAMP_ANGLE = 0.235;
 const RAMP_START_Y = 1.31;
 const BODY_RADIUS = 0.22;
 const TABLE_TOP = 0.14;
+const RAMP_END_X = RAMP_START_X + (RAMP_START_Y - TABLE_TOP) / Math.tan(RAMP_ANGLE);
 const bodyHalfHeight = (kind: BodyKind) => kind === "ball" ? BODY_RADIUS : BODY_RADIUS * 0.875;
 const ROLLING_FACTOR = 5 / 7;
 
