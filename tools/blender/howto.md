@@ -81,6 +81,8 @@ Keep the `.blend` files as the editable source of truth. The application should 
 
 The generator currently produces the library and manifest; the current ramp lesson still uses its code-built workbench meshes. Wiring the manifest and GLBs into the runtime catalogue is the next asset integration step.
 
+If a run stops partway through, fix the reported builder issue and rerun the full command. Existing files are overwritten, so completed assets are safely regenerated before Blender continues through the remaining list. To generate only the failed model, use `-- --only <asset-id>` (for example, `-- --only bucket`), then rerun the full command to finish the library. Run PowerShell commands as separate lines and invoke the executable with `&`; `--root` must be followed by a repository path when you use it, such as `-- --root "D:\\dev\\my\\physicslab"`.
+
 ## Editing and regenerating
 
 Edit the model builder for an asset in `generate_assets.py`, then run it with `--only <asset-id>`. For major visual changes, open the corresponding `.blend` file and refine the geometry/materials there. If you edit the `.blend` directly, export it as GLB using Blender's glTF 2.0 exporter and keep the manifest's socket IDs and collider dimensions in sync.
