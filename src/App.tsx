@@ -14,7 +14,7 @@ import {
 } from "@babylonjs/core";
 import motionLesson from "./content/motion-01.json";
 import "@babylonjs/loaders/glTF/2.0";
-import { LoadAssetContainerAsync, type AssetContainer, type TransformNode } from "@babylonjs/core";
+import { LoadAssetContainerAsync, TransformNode, type AssetContainer } from "@babylonjs/core";
 import { RampSolver, type BodyKind, type BodyState } from "./physics/RampSolver";
 
 type Locale = "en" | "de";
