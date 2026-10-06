@@ -26,7 +26,7 @@
 - [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
 - [x] Implement first-lesson completion tracking: only a finished ball satisfies the target, completion persists locally across reset/replay, and storage errors fall back to session-only completion.
 - [x] Unit-test persistence across reloads and blocked-storage fallback.
-- [ ] Browser-verify the full Run/Step, reset/replay, and model-loading experience.
+- [ ] Browser-verify the full Run/Step, reset/replay, model-loading, and ruler toggle/visibility experience.
 - [x] Add a bilingual fact card with a source link and simple/learn/technical explanation levels.
 - [x] Add production build/typecheck scripts.
 - [x] Move first-lesson science copy into structured bilingual JSON and validate required explanation levels, formula labels, and an HTTPS source.
@@ -38,7 +38,7 @@
 ### 1. Mechanical lab
 - Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
 - Object selection/inspection, snapping, undo/redo, save/load, deterministic reset.
-- Force/velocity X-Ray, ruler, stopwatch, scale, and energy readouts.
+- [x] Add a calibrated 0–8 m ruler to the workbench with 1 m and 0.25 m graduations and EN/DE toolbar feedback.\n- [ ] Add object selection/inspection, snapping, undo/redo, save/load, deterministic reset.\n- [ ] Add independently controlled stopwatch, scale, and energy readouts.\n- Force/velocity X-Ray and lessons for gravity, velocity, acceleration, friction, momentum, collisions, torque, and mechanical advantage.
 - Lessons for gravity, velocity, acceleration, friction, momentum, collisions, torque, and mechanical advantage.
 
 ### 2. Fluids and water
