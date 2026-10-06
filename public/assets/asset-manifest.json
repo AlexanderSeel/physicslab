@@ -1,0 +1,475 @@
+{
+  "schemaVersion": 1,
+  "coordinateSystem": "Y-up glTF, meter units",
+  "assets": [
+    {
+      "id": "ball",
+      "model": "assets/models/ball.glb",
+      "source": "assets/blender-source/ball.blend",
+      "collider": {
+        "type": "sphere",
+        "radius": 0.22
+      },
+      "sockets": [],
+      "units": "meters"
+    },
+    {
+      "id": "cube",
+      "model": "assets/models/cube.glb",
+      "source": "assets/blender-source/cube.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          0.385,
+          0.385,
+          0.385
+        ]
+      },
+      "sockets": [],
+      "units": "meters"
+    },
+    {
+      "id": "weight",
+      "model": "assets/models/weight.glb",
+      "source": "assets/blender-source/weight.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          0.42,
+          0.34,
+          0.48
+        ]
+      },
+      "sockets": [
+        "INTERACTION_HANDLE"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "ramp",
+      "model": "assets/models/ramp.glb",
+      "source": "assets/blender-source/ramp.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          5.2,
+          1.5,
+          0.16
+        ]
+      },
+      "sockets": [
+        "CONTACT_START",
+        "CONTACT_END"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "platform",
+      "model": "assets/models/platform.glb",
+      "source": "assets/blender-source/platform.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          2.4,
+          1.6,
+          1.0
+        ]
+      },
+      "sockets": [
+        "CONTACT_TOP"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "lever",
+      "model": "assets/models/lever.glb",
+      "source": "assets/blender-source/lever.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          2.6,
+          0.25,
+          0.55
+        ]
+      },
+      "sockets": [
+        "HINGE_AXIS",
+        "CONTACT_LEFT",
+        "CONTACT_RIGHT"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "hinge",
+      "model": "assets/models/hinge.glb",
+      "source": "assets/blender-source/hinge.blend",
+      "collider": {
+        "type": "compound",
+        "size": [
+          0.8,
+          0.5,
+          0.5
+        ]
+      },
+      "sockets": [
+        "HINGE_AXIS"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "spring",
+      "model": "assets/models/spring.glb",
+      "source": "assets/blender-source/spring.blend",
+      "collider": {
+        "type": "capsule",
+        "radius": 0.16,
+        "height": 1.1
+      },
+      "sockets": [
+        "SPRING_TOP",
+        "SPRING_BOTTOM"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "domino",
+      "model": "assets/models/domino.glb",
+      "source": "assets/blender-source/domino.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          0.16,
+          0.09,
+          0.48
+        ]
+      },
+      "sockets": [],
+      "units": "meters"
+    },
+    {
+      "id": "pulley",
+      "model": "assets/models/pulley.glb",
+      "source": "assets/blender-source/pulley.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.45,
+        "height": 0.16
+      },
+      "sockets": [
+        "SHAFT_AXIS",
+        "ROPE_GUIDE"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "water_wheel",
+      "model": "assets/models/water_wheel.glb",
+      "source": "assets/blender-source/water_wheel.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.7,
+        "height": 0.18
+      },
+      "sockets": [
+        "SHAFT_AXIS"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "bucket",
+      "model": "assets/models/bucket.glb",
+      "source": "assets/blender-source/bucket.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.39,
+        "height": 0.62
+      },
+      "sockets": [
+        "FLUID_IN"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "water_tank",
+      "model": "assets/models/water_tank.glb",
+      "source": "assets/blender-source/water_tank.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          1.0,
+          0.8,
+          1.2
+        ]
+      },
+      "sockets": [
+        "FLUID_IN",
+        "FLUID_OUT",
+        "PRESSURE_PORT"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "pipe",
+      "model": "assets/models/pipe.glb",
+      "source": "assets/blender-source/pipe.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.11,
+        "height": 1.0
+      },
+      "sockets": [
+        "FLUID_IN",
+        "FLUID_OUT"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "valve",
+      "model": "assets/models/valve.glb",
+      "source": "assets/blender-source/valve.blend",
+      "collider": {
+        "type": "compound",
+        "size": [
+          1.2,
+          0.5,
+          0.75
+        ]
+      },
+      "sockets": [
+        "FLUID_IN",
+        "FLUID_OUT",
+        "INTERACTION_HANDLE"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "pump",
+      "model": "assets/models/pump.glb",
+      "source": "assets/blender-source/pump.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          0.8,
+          0.6,
+          1.1
+        ]
+      },
+      "sockets": [
+        "FLUID_IN",
+        "FLUID_OUT",
+        "INTERACTION_HANDLE"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "balloon",
+      "model": "assets/models/balloon.glb",
+      "source": "assets/blender-source/balloon.blend",
+      "collider": {
+        "type": "sphere",
+        "radius": 0.42
+      },
+      "sockets": [
+        "GAS_PORT"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "fan",
+      "model": "assets/models/fan.glb",
+      "source": "assets/blender-source/fan.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          0.9,
+          0.4,
+          1.25
+        ]
+      },
+      "sockets": [
+        "ELECTRICAL_IN",
+        "AIR_OUT",
+        "SHAFT_AXIS"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "battery",
+      "model": "assets/models/battery.glb",
+      "source": "assets/blender-source/battery.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          0.5,
+          0.32,
+          0.8
+        ]
+      },
+      "sockets": [
+        "ELECTRICAL_POSITIVE",
+        "ELECTRICAL_NEGATIVE"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "switch",
+      "model": "assets/models/switch.glb",
+      "source": "assets/blender-source/switch.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          0.62,
+          0.42,
+          0.75
+        ]
+      },
+      "sockets": [
+        "WIRE_IN",
+        "WIRE_OUT",
+        "INTERACTION_HANDLE"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "lamp",
+      "model": "assets/models/lamp.glb",
+      "source": "assets/blender-source/lamp.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.24,
+        "height": 0.72
+      },
+      "sockets": [
+        "WIRE_IN",
+        "WIRE_OUT"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "led",
+      "model": "assets/models/led.glb",
+      "source": "assets/blender-source/led.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.12,
+        "height": 0.38
+      },
+      "sockets": [
+        "WIRE_IN",
+        "WIRE_OUT"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "resistor",
+      "model": "assets/models/resistor.glb",
+      "source": "assets/blender-source/resistor.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.09,
+        "height": 0.42
+      },
+      "sockets": [
+        "WIRE_IN",
+        "WIRE_OUT"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "motor",
+      "model": "assets/models/motor.glb",
+      "source": "assets/blender-source/motor.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.3,
+        "height": 0.58
+      },
+      "sockets": [
+        "ELECTRICAL_IN",
+        "ELECTRICAL_OUT",
+        "SHAFT_AXIS"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "generator",
+      "model": "assets/models/generator.glb",
+      "source": "assets/blender-source/generator.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.34,
+        "height": 0.7
+      },
+      "sockets": [
+        "SHAFT_AXIS",
+        "ELECTRICAL_POSITIVE",
+        "ELECTRICAL_NEGATIVE"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "burner",
+      "model": "assets/models/burner.glb",
+      "source": "assets/blender-source/burner.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.44,
+        "height": 0.42
+      },
+      "sockets": [
+        "THERMAL_OUT",
+        "GAS_IN"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "pressure_gauge",
+      "model": "assets/models/pressure_gauge.glb",
+      "source": "assets/blender-source/pressure_gauge.blend",
+      "collider": {
+        "type": "cylinder",
+        "radius": 0.38,
+        "height": 0.16
+      },
+      "sockets": [
+        "PRESSURE_PORT"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "thermometer",
+      "model": "assets/models/thermometer.glb",
+      "source": "assets/blender-source/thermometer.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          0.12,
+          0.12,
+          0.9
+        ]
+      },
+      "sockets": [
+        "TEMPERATURE_PROBE"
+      ],
+      "units": "meters"
+    },
+    {
+      "id": "sensor",
+      "model": "assets/models/sensor.glb",
+      "source": "assets/blender-source/sensor.blend",
+      "collider": {
+        "type": "box",
+        "size": [
+          0.38,
+          0.3,
+          0.22
+        ]
+      },
+      "sockets": [
+        "SENSOR_INPUT",
+        "LOGIC_OUT"
+      ],
+      "units": "meters"
+    }
+  ]
+}
