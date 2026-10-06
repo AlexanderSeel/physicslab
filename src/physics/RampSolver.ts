@@ -38,7 +38,7 @@ export class RampSolver {
       id: this.nextId++,
       kind,
       x: RAMP_START_X + 0.38 + spacing * 0.52,
-      y: RAMP_START_Y - spacing * Math.tan(RAMP_ANGLE) * 0.52 + bodyHalfHeight(kind),
+      y: RAMP_START_Y - (0.38 + spacing * 0.52) * Math.tan(RAMP_ANGLE) + bodyHalfHeight(kind),
       speed: 0,
       rotation: 0,
       finished: false,
