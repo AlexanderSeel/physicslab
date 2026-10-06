@@ -25,12 +25,13 @@
 - [x] Add ball/cube components from the palette; load the committed ball/cube GLBs as runtime visuals with procedural fallback meshes; keep the ramp prebuilt in the first scene.
 - [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
 - [x] Implement first-lesson completion tracking: only a finished ball satisfies the target, completion persists locally across reset/replay, and storage errors fall back to session-only completion.
-- [ ] Browser-verify completion through Run and Step, persistence after reset/reload, and the storage-unavailable fallback.
+- [x] Unit-test persistence across reloads and blocked-storage fallback.
+- [ ] Browser-verify the full Run/Step, reset/replay, and model-loading experience.
 - [x] Add a bilingual fact card with a source link and simple/learn/technical explanation levels.
 - [x] Add production build/typecheck scripts.
 - [x] Move first-lesson science copy into structured bilingual JSON and validate required explanation levels, formula labels, and an HTTPS source.
 - [x] Add CI gates for project validation, solver regression tests, typecheck, and production build.
-- [ ] Confirm the latest GitHub Actions run passes after runtime GLB loading changes.
+- [ ] Confirm the latest GitHub Actions run passes with runtime GLBs and persistence tests.
 
 **Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser and production-build acceptance checks remain open. Mass/restitution controls remain follow-up work because contact dynamics are not implemented.
 
