@@ -32,7 +32,7 @@ const copy = {
     learnText: motionLesson.locales.en.learn,
     technicalText: motionLesson.locales.en.technical,
     formulaCaption: motionLesson.formula.caption.en, source: motionLesson.source.title.en,
-    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "TIME", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: motionLesson.formula.title.en,
+    simple: "SIMPLE", learn: "LEARN", technical: "TECHNICAL", time: "TIME", speed: "SPEED", target: "TARGET", journeyLabel: "LEARNING JOURNEY", motion: "Motion", lessonProgress: "1 of 8", lessonCompleted: "Completed", explorer: "Explorer", workbench: "Workbench 01", rampMotion: "Ramp & Motion", measure: "Measure", measureOn: "RULER ON", rulerScale: "1 m major · 0.25 m minor", labNotes: "LAB NOTES", orbitHint: "DRAG TO ORBIT", zoomHint: "SCROLL TO ZOOM", objects: "OBJECTS", gravityLabel: "GRAVITY", rampAngle: "RAMP ANGLE", tryThis: "Try this", factSourceLabel: "SOURCE", rollingTitle: motionLesson.formula.title.en,
   },
   de: {
     eyebrow: "PHYSICSLAB / BEWEGUNG 01", title: "Bauen. Beobachten. Verstehen.",
@@ -46,7 +46,7 @@ const copy = {
     learnText: motionLesson.locales.de.learn,
     technicalText: motionLesson.locales.de.technical,
     formulaCaption: motionLesson.formula.caption.de, source: motionLesson.source.title.de,
-    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
+    simple: "EINFACH", learn: "LERNEN", technical: "TECHNISCH", time: "ZEIT", speed: "TEMPO", target: "ZIEL", journeyLabel: "LERNPFAD", motion: "Bewegung", lessonProgress: "1 von 8", lessonCompleted: "Abgeschlossen", explorer: "Entdecker", workbench: "Werkbank 01", rampMotion: "Rampe & Bewegung", measure: "Messen", measureOn: "LINEAL AN", rulerScale: "1 m groß · 0,25 m klein", labNotes: "LABORNOTIZEN", orbitHint: "ZIEHEN ZUM DREHEN", zoomHint: "SCROLLEN ZUM ZOOMEN", objects: "OBJEKTE", gravityLabel: "GRAVITATION", rampAngle: "RAMPENWINKEL", tryThis: "Probiere das", factSourceLabel: "QUELLE", rollingTitle: motionLesson.formula.title.de,
   },
 } as const;
 
@@ -62,6 +62,35 @@ function attachGlb(visual: VisualBody, container: AssetContainer): void {
   for (const node of instances.rootNodes) node.parent = visual.root;
   visual.fallbackMesh.dispose(false, true);
   visual.fallbackMesh = undefined;
+}
+
+function createRulerRig(scene: Scene): TransformNode {
+  const root = new TransformNode("meter-ruler", scene);
+  const lineMaterial = new StandardMaterial("meter-ruler-material", scene);
+  lineMaterial.emissiveColor = Color3.FromHexString("#477e69");
+  lineMaterial.disableLighting = true;
+
+  const baseline = MeshBuilder.CreateLines("ruler-baseline", {
+    points: [new Vector3(-4, 0.165, -2.35), new Vector3(4, 0.165, -2.35)],
+  }, scene);
+  baseline.parent = root;
+
+  for (let index = 0; index <= 32; index += 1) {
+    const x = -4 + index * 0.25;
+    const major = index % 4 === 0;
+    const halfMeter = index % 2 === 0;
+    const height = major ? 0.18 : halfMeter ? 0.12 : 0.075;
+    const tick = MeshBuilder.CreateLines(`ruler-tick-${index}`, {
+      points: [new Vector3(x, 0.165, -2.35), new Vector3(x, 0.165 + height, -2.35)],
+    }, scene);
+    tick.parent = root;
+  }
+  for (const line of [baseline, ...scene.meshes.filter(mesh => mesh.name.startsWith("ruler-tick-"))]) {
+    line.color = Color3.FromHexString("#477e69");
+    line.material = lineMaterial;
+  }
+  root.setEnabled(false);
+  return root;
 }
 
 function disposeVisual(visual: VisualBody): void {
@@ -84,7 +113,7 @@ export default function App() {
   const [time, setTime] = useState(0);
   const [bodyCount, setBodyCount] = useState(0);
   const [gravity, setGravity] = useState(9.81);
-  const [xray, setXray] = useState(false);
+  const [xray, setXray] = useState(false);\n  const [measureVisible, setMeasureVisible] = useState(false);\n  const measureRigRef = useRef<TransformNode | null>(null);
   const [targetReached, setTargetReached] = useState(false);
   const [lessonCompleted, setLessonCompleted] = useState(isMotionLessonComplete);
   const lessonCompletedRef = useRef(lessonCompleted);
@@ -113,7 +142,7 @@ export default function App() {
     camera.wheelPrecision = 45;
     camera.panningSensibility = 0;
     camera.attachControl(canvas, true);
-    new HemisphericLight("softbox", new Vector3(-0.4, 1, -0.25), scene).intensity = 0.9;
+    new HemisphericLight("softbox", new Vector3(-0.4, 1, -0.25), scene).intensity = 0.9;\n    measureRigRef.current = createRulerRig(scene);
 
     const mat = (name: string, color: string, metallic = 0.1, roughness = 0.6) => {
       const material = new PBRMaterial(name, scene);
@@ -322,8 +351,8 @@ export default function App() {
         </aside>
 
         <section className="lab-column">
-          <div className="lab-toolbar"><div className="lab-title"><span className="live-dot" /> <b>{t.workbench}</b><span className="toolbar-divider">/</span><span>{t.rampMotion}</span></div><div className="toolbar-tools"><button className={xray ? "tool-button selected" : "tool-button"} onClick={() => setXray(!xray)}><span>◉</span> {t.xray}</button><button className="tool-button"><span>⌗</span> {t.measure}</button><button className="tool-button icon-only" aria-label="More options">···</button></div></div>
-          <div className="scene-frame"><canvas ref={canvasRef} aria-label="Interactive 3D physics workbench" /><div className="scene-badge"><span className={playing ? "badge-dot active" : "badge-dot"} />{targetReached ? t.success : playing ? t.running : time > 0 ? t.paused : t.ready}</div><div className="scene-hint">{t.orbitHint} <span>·</span> {t.zoomHint}</div><div className="target-label">{t.target}<span>04</span></div>
+          <div className="lab-toolbar"><div className="lab-title"><span className="live-dot" /> <b>{t.workbench}</b><span className="toolbar-divider">/</span><span>{t.rampMotion}</span></div><div className="toolbar-tools"><button className={xray ? "tool-button selected" : "tool-button"} onClick={() => setXray(!xray)}><span>◉</span> {t.xray}</button><button className={measureVisible ? "tool-button selected" : "tool-button"} aria-pressed={measureVisible} onClick={() => setMeasureVisible(value => !value)}><span>⌗</span> {t.measure}</button><button className="tool-button icon-only" aria-label="More options">···</button></div></div>
+          <div className="scene-frame"><canvas ref={canvasRef} aria-label="Interactive 3D physics workbench" /><div className="scene-badge"><span className={playing ? "badge-dot active" : "badge-dot"} />{targetReached ? t.success : playing ? t.running : time > 0 ? t.paused : t.ready}</div>{measureVisible && <div className="ruler-legend" role="status"><b>{t.measureOn}</b><span>{t.rulerScale}</span></div>}<div className="scene-hint">{t.orbitHint} <span>·</span> {t.zoomHint}</div><div className="target-label">{t.target}<span>04</span></div>
             {xray && <div className="xray-legend"><b>{t.xray.toUpperCase()}</b><span><i className="gravity-line" /> Gravity · {gravity.toFixed(1)} m/s²</span><span><i className="motion-line" /> Velocity</span></div>}
           </div>
           <div className="transport"><div className="transport-buttons"><button className="reset-button" onClick={reset} title={t.reset}>↺</button>{playing ? <button className="play-button" onClick={pause}>Ⅱ <span>{t.pause}</span></button> : <button className="play-button" onClick={start}>▶ <span>{t.play}</span></button>}<button className="step-button" onClick={step}>▸│ <span>{t.step}</span></button><span className="transport-divider" /><span className="time-readout"><small>{t.time}</small><b>{time.toFixed(2)}<i>s</i></b></span></div>
