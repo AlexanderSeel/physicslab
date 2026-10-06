@@ -2,7 +2,7 @@
 """Generate the PhysicsLab starter asset library as editable .blend files and runtime .glb files.
 
 Run with:
-  blender --background --python tools/blender/generate_assets.py -- --root . 
+  blender --background --python tools/blender/generate_assets.py 
 """
 from __future__ import annotations
 
