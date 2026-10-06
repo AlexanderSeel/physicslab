@@ -566,6 +566,7 @@ def export_asset(asset_id, spec, args):
     bpy.context.view_layer.objects.active = root
     bpy.ops.export_scene.gltf(
         filepath=str(glb_path),
+        check_existing=False,
         export_format="GLB",
         use_selection=True,
         export_apply=True,
