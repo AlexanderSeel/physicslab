@@ -24,11 +24,13 @@
 - [x] Add an initial mechanics scene: ground, ramp, ball, and target.
 - [x] Add ball/cube components from the palette; the ramp is prebuilt in the first scene.
 - [x] Expose gravity control; mass and restitution controls remain planned once contact dynamics are implemented.
-- [x] Validate the first lesson objective against a finished ball only; persist completion locally, preserve it across reset/replay, and handle storage unavailability.
+- [x] Implement first-lesson completion tracking: only a finished ball satisfies the target, completion persists locally across reset/replay, and storage errors fall back to session-only completion.
+- [ ] Browser-verify completion through Run and Step, persistence after reset/reload, and the storage-unavailable fallback.
 - [x] Add a bilingual fact card with a source link and simple/learn/technical explanation levels.
-- [x] Add production build/typecheck scripts; verify the build after the locale syntax correction and add structured content validation.
+- [x] Add production build/typecheck scripts.
+- [ ] Run typecheck and production build after the locale syntax correction; add structured learning-content validation.
 
-**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion survives reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Mass/restitution controls remain follow-up work because contact dynamics are not implemented.
+**Acceptance:** A learner can add a ball or cube to the prepared ramp scene, run/pause/step/reset the fixed-step mechanics model, change gravity, switch the core interface between EN and DE, and complete the objective only by getting a ball to the target. Completion is implemented to survive reset/replay in local browser storage; if storage is unavailable, the lesson still completes for the current session. Browser and production-build acceptance checks remain open. Mass/restitution controls remain follow-up work because contact dynamics are not implemented.
 
 ### 1. Mechanical lab
 - Havok-backed balls, boxes, weights, ramps, platforms, hinges, levers, springs, and dominoes.
